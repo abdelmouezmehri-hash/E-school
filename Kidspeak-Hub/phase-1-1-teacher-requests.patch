@@ -1,0 +1,320 @@
+# Phase 1.1 — Activity Requests for Teachers
+# Generated: 2026-04-30T18:16:54Z
+#
+# Apply with: cd ~/workspace/Kidspeak-Hub && git apply phase-1-1-teacher-requests.patch
+#
+# Files changed:
+#   artifacts/api-server/src/routes/requests.ts        - Allow teachers to create/manage their own activity requests
+#   artifacts/kidspeak/src/App.tsx                     - Add 'teacher' to allowedRoles for /requests
+#   artifacts/kidspeak/src/pages/requests/index.tsx    - UI: show create/delete buttons to teachers; scope to own requests
+#   artifacts/kidspeak/src/components/layout.tsx       - Add /requests link to teacher sidebar
+
+--- a/artifacts/api-server/src/routes/requests.ts	2026-04-30 13:40:48.000000000 +0000
++++ b/artifacts/api-server/src/routes/requests.ts	2026-04-30 18:13:46.394698245 +0000
+@@ -96,19 +96,33 @@
+ 
+ router.get("/requests/audience-options", requireAuth, async (req, res) => {
+   const user = (req as any).user;
+-  if (user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
++  if (!["admin", "teacher"].includes(user.role)) return res.status(403).json({ error: "Forbidden" });
+ 
+   try {
+-    const [levels, groups, teachers] = await Promise.all([
+-      db.select({ id: levelsTable.id, name: levelsTable.name }).from(levelsTable).orderBy(levelsTable.name),
+-      db.select({ id: groupsTable.id, name: groupsTable.name }).from(groupsTable).orderBy(groupsTable.name),
+-      db
+-        .select({ id: usersTable.id, name: usersTable.name })
+-        .from(usersTable)
+-        .where(eq(usersTable.role, "teacher"))
+-        .orderBy(usersTable.name),
+-    ]);
+-    res.json({ levels, groups, teachers });
++    if (user.role === "admin") {
++      const [levels, groups, teachers] = await Promise.all([
++        db.select({ id: levelsTable.id, name: levelsTable.name }).from(levelsTable).orderBy(levelsTable.name),
++        db.select({ id: groupsTable.id, name: groupsTable.name }).from(groupsTable).orderBy(groupsTable.name),
++        db
++          .select({ id: usersTable.id, name: usersTable.name })
++          .from(usersTable)
++          .where(eq(usersTable.role, "teacher"))
++          .orderBy(usersTable.name),
++      ]);
++      res.json({ levels, groups, teachers });
++    } else {
++      // teacher: scoped to their own groups; can also pick a level or themselves;
++      // cannot target other teachers or "all"
++      const [levels, ownGroups] = await Promise.all([
++        db.select({ id: levelsTable.id, name: levelsTable.name }).from(levelsTable).orderBy(levelsTable.name),
++        db
++          .select({ id: groupsTable.id, name: groupsTable.name })
++          .from(groupsTable)
++          .where(eq(groupsTable.teacherId, user.id))
++          .orderBy(groupsTable.name),
++      ]);
++      res.json({ levels, groups: ownGroups, teachers: [{ id: user.id, name: user.name ?? "Me" }] });
++    }
+   } catch (err) {
+     res.status(500).json({ error: "Failed to fetch audience options" });
+   }
+@@ -147,6 +161,9 @@
+       if (relevant !== "all") {
+         filtered = items.filter((i) => relevant.includes(i.id));
+       }
++    } else if (user.role === "teacher") {
++      // Teachers see only the activity requests they authored
++      filtered = items.filter((i) => i.authorId === user.id);
+     }
+ 
+     const enriched = await Promise.all(
+@@ -188,11 +205,22 @@
+ 
+ router.get("/requests/:id/consents", requireAuth, async (req, res) => {
+   const user = (req as any).user;
+-  if (user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
++  if (!["admin", "teacher"].includes(user.role)) return res.status(403).json({ error: "Forbidden" });
+ 
+   const id = parseInt(req.params.id);
+   if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+ 
++  // Teachers can only view consents for requests they authored
++  if (user.role === "teacher") {
++    const [request] = await db
++      .select({ authorId: activityRequestsTable.authorId })
++      .from(activityRequestsTable)
++      .where(eq(activityRequestsTable.id, id));
++    if (!request || request.authorId !== user.id) {
++      return res.status(403).json({ error: "You can only view consents for your own activity requests" });
++    }
++  }
++
+   try {
+     const consents = await db
+       .select({
+@@ -216,7 +244,7 @@
+ 
+ router.post("/requests", requireAuth, async (req, res) => {
+   const user = (req as any).user;
+-  if (user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
++  if (!["admin", "teacher"].includes(user.role)) return res.status(403).json({ error: "Forbidden" });
+ 
+   const { title, titleAr, description, descriptionAr, date, requiredItems, requiredItemsAr, cost, targetType, targetId } = req.body;
+   if (!title || !description || !date) return res.status(400).json({ error: "title, description, date are required" });
+@@ -225,6 +253,29 @@
+   const resolvedTargetType = validTargetTypes.includes(targetType) ? targetType : "all";
+   const resolvedTargetId = resolvedTargetType !== "all" && targetId ? parseInt(targetId) : null;
+ 
++  // Teachers can only target their own scope:
++  //  - "all" is reserved for admin (school-wide announcements)
++  //  - "teacher" must be themselves
++  //  - "group" must be a group they teach
++  //  - "level" is allowed (a teacher may run an activity for a whole level)
++  if (user.role === "teacher") {
++    if (resolvedTargetType === "all") {
++      return res.status(403).json({ error: "Teachers cannot create school-wide requests. Pick a level, group, or yourself as the audience." });
++    }
++    if (resolvedTargetType === "teacher" && resolvedTargetId !== user.id) {
++      return res.status(403).json({ error: "Teachers can only target themselves." });
++    }
++    if (resolvedTargetType === "group" && resolvedTargetId !== null) {
++      const [group] = await db
++        .select({ teacherId: groupsTable.teacherId })
++        .from(groupsTable)
++        .where(eq(groupsTable.id, resolvedTargetId));
++      if (!group || group.teacherId !== user.id) {
++        return res.status(403).json({ error: "You can only create requests for groups you teach." });
++      }
++    }
++  }
++
+   const items = Array.isArray(requiredItems) ? requiredItems.filter((i: any) => typeof i === "string" && i.trim()) : [];
+   const itemsAr = Array.isArray(requiredItemsAr) ? requiredItemsAr.filter((i: any) => typeof i === "string" && i.trim()) : [];
+ 
+@@ -255,11 +306,22 @@
+ 
+ router.delete("/requests/:id", requireAuth, async (req, res) => {
+   const user = (req as any).user;
+-  if (user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
++  if (!["admin", "teacher"].includes(user.role)) return res.status(403).json({ error: "Forbidden" });
+ 
+   const id = parseInt(req.params.id);
+   if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+ 
++  // Teachers can only delete requests they authored
++  if (user.role === "teacher") {
++    const [request] = await db
++      .select({ authorId: activityRequestsTable.authorId })
++      .from(activityRequestsTable)
++      .where(eq(activityRequestsTable.id, id));
++    if (!request || request.authorId !== user.id) {
++      return res.status(403).json({ error: "You can only delete your own activity requests" });
++    }
++  }
++
+   try {
+     await db.delete(activityRequestsTable).where(eq(activityRequestsTable.id, id));
+     res.json({ success: true });
+--- a/artifacts/kidspeak/src/pages/requests/index.tsx	2026-04-30 18:14:00.350698205 +0000
++++ b/artifacts/kidspeak/src/pages/requests/index.tsx	2026-04-30 18:16:05.673697840 +0000
+@@ -154,6 +154,9 @@
+ 
+   const { data: me } = useGetMe();
+   const isAdmin = (me as any)?.role === "admin";
++  const isTeacher = (me as any)?.role === "teacher";
++  const isStaff = isAdmin || isTeacher;
++  const isParent = (me as any)?.role === "parent";
+   const userId = (me as any)?.id;
+ 
+   const { data: requests = [], isLoading, refetch } = useListRequests();
+@@ -171,7 +174,7 @@
+   const [itemsText, setItemsText] = useState("");
+   const [itemsTextAr, setItemsTextAr] = useState("");
+   const [cost, setCost] = useState("");
+-  const [targetType, setTargetType] = useState<TargetType>("all");
++  const [targetType, setTargetType] = useState<TargetType>(isTeacher ? "group" : "all");
+   const [targetId, setTargetId] = useState<string>("");
+   const [audienceOptions, setAudienceOptions] = useState<AudienceOptions>({ levels: [], groups: [], teachers: [] });
+   const [audienceLoading, setAudienceLoading] = useState(false);
+@@ -179,23 +182,23 @@
+   // Consent dialog
+   const [consentDialog, setConsentDialog] = useState<{ id: number; title: string; targetLabel: string } | null>(null);
+ 
+-  // Load audience options when modal opens (admin only)
++  // Load audience options when modal opens (staff: admin or teacher)
+   useEffect(() => {
+-    if (!open || !isAdmin) return;
++    if (!open || !isStaff) return;
+     setAudienceLoading(true);
+     fetch("/api/requests/audience-options", { credentials: "include" })
+       .then((r) => r.json())
+       .then((data) => setAudienceOptions(data))
+       .catch(() => {})
+       .finally(() => setAudienceLoading(false));
+-  }, [open, isAdmin]);
++  }, [open, isStaff]);
+ 
+   // Reset targetId when targetType changes
+   useEffect(() => { setTargetId(""); }, [targetType]);
+ 
+   const resetForm = () => {
+     setReqTitle(""); setReqTitleAr(""); setDesc(""); setDescAr(""); setDate(""); setItemsText(""); setItemsTextAr(""); setCost("");
+-    setTargetType("all"); setTargetId("");
++    setTargetType(isTeacher ? "group" : "all"); setTargetId("");
+   };
+ 
+   const handleCreate = () => {
+@@ -245,7 +248,7 @@
+   };
+ 
+   // Count unseen (no consent yet) activities for parents
+-  const unseenCount = !isAdmin
++  const unseenCount = isParent
+     ? (requests as any[]).filter((r) => !(r as any).myConsentStatus).length
+     : 0;
+ 
+@@ -256,15 +259,15 @@
+         <div>
+           <div className="flex items-center gap-2">
+             <h1 className="text-3xl font-bold tracking-tight">{rt.title}</h1>
+-            {!isAdmin && unseenCount > 0 && (
++            {isParent && unseenCount > 0 && (
+               <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white" style={{ backgroundColor: "#F5A600", color: "#1B2E8F" }}>
+                 {unseenCount}
+               </span>
+             )}
+           </div>
+-          <p className="text-muted-foreground text-sm mt-1">{isAdmin ? rt.adminSubtitle : rt.subtitle}</p>
++          <p className="text-muted-foreground text-sm mt-1">{isStaff ? rt.adminSubtitle : rt.subtitle}</p>
+         </div>
+-        {isAdmin && (
++        {isStaff && (
+           <Button
+             style={{ backgroundColor: "#F5A600", color: "#1B2E8F" }}
+             className="font-semibold"
+@@ -289,7 +292,7 @@
+           {(requests as any[]).map((req) => {
+             const isPast = new Date(req.date) < new Date();
+             const hasResponded = !!req.myConsentStatus;
+-            const isNew = !isAdmin && !hasResponded && !isPast;
++            const isNew = isParent && !hasResponded && !isPast;
+ 
+             return (
+               <Card key={req.id} className="overflow-hidden hover:shadow-lg transition-all">
+@@ -333,7 +336,7 @@
+                         </div>
+                       </div>
+                     </div>
+-                    {isAdmin && (
++                    {(isAdmin || (isTeacher && req.authorId === userId)) && (
+                       <Button
+                         variant="ghost"
+                         size="icon"
+@@ -365,8 +368,8 @@
+                     </div>
+                   )}
+ 
+-                  {/* Admin: target audience + consent stats */}
+-                  {isAdmin && (
++                  {/* Staff: target audience + consent stats — admin sees all, teacher sees their own */}
++                  {(isAdmin || (isTeacher && req.authorId === userId)) && (
+                     <div className="space-y-2 pt-3 border-t">
+                       {/* Target audience */}
+                       <div className="flex items-center gap-2">
+@@ -402,7 +405,7 @@
+                   )}
+ 
+                   {/* Parent: consent status or buttons */}
+-                  {!isAdmin && hasResponded && (
++                  {isParent && hasResponded && (
+                     <div className="pt-3 border-t flex items-center justify-between">
+                       <Badge
+                         className="text-xs font-semibold"
+@@ -439,7 +442,7 @@
+                     </div>
+                   )}
+ 
+-                  {!isAdmin && !hasResponded && !isPast && (
++                  {isParent && !hasResponded && !isPast && (
+                     <div className="flex gap-2 pt-3 border-t">
+                       <Button
+                         className="flex-1 font-semibold h-9"
+@@ -460,7 +463,7 @@
+                     </div>
+                   )}
+ 
+-                  {!isAdmin && isPast && !hasResponded && (
++                  {isParent && isPast && !hasResponded && (
+                     <div className="pt-3 border-t">
+                       <Badge variant="outline" className="text-muted-foreground text-xs">
+                         <Clock className="w-3 h-3 me-1" />
+@@ -562,12 +565,14 @@
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+-                    <SelectItem value="all">
+-                      <div className="flex items-center gap-2">
+-                        <Globe className="w-4 h-4 text-muted-foreground" />
+-                        {rt.targetTypeAll}
+-                      </div>
+-                    </SelectItem>
++                    {isAdmin && (
++                      <SelectItem value="all">
++                        <div className="flex items-center gap-2">
++                          <Globe className="w-4 h-4 text-muted-foreground" />
++                          {rt.targetTypeAll}
++                        </div>
++                      </SelectItem>
++                    )}
+                     <SelectItem value="level">
+                       <div className="flex items-center gap-2">
+                         <BookOpen className="w-4 h-4 text-[#F5A600]" />
+--- a/artifacts/kidspeak/src/components/layout.tsx
++++ b/artifacts/kidspeak/src/components/layout.tsx
+@@ -233,6 +233,7 @@
+     ...(role === "teacher" ? [
+       { href: "/groups",         label: t.nav.myGroups,    icon: BookOpen,            permission: "groups" },
+       { href: "/groups/earnings",label: t.nav.myEarnings,  icon: Wallet,              permission: "groups" },
+       { href: "/evaluations",    label: t.nav.evaluations, icon: LineChart,            permission: "evaluations" },
++      { href: "/requests",       label: t.nav.requests,    icon: MapPin,               permission: "requests" },
+       { href: "/students",       label: pupilLabel,         icon: Users,               permission: "students" },
+       { href: "/gallery",        label: t.nav.gallery,     icon: GalleryHorizontalEnd, permission: "gallery" },
+       { href: "/inbox",          label: t.nav.inbox,       icon: Inbox, badge: unreadMsgCount > 0 ? unreadMsgCount : undefined, permission: "inbox" },

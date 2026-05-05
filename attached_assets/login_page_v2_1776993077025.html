@@ -1,0 +1,157 @@
+
+<style>
+.tab-btn { padding:8px 20px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid transparent;transition:all 0.15s; }
+.tab-active { background:#F5A800;color:#fff;border-color:#F5A800; }
+.tab-inactive { background:transparent;color:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.15); }
+.tab-inactive:hover { color:rgba(255,255,255,0.8); }
+</style>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;min-height:500px;border-radius:16px;overflow:hidden;border:0.5px solid var(--color-border-tertiary);">
+
+  <!-- LEFT: Form -->
+  <div style="background:var(--color-background-primary);padding:32px 28px;display:flex;flex-direction:column;justify-content:center;" id="formPanel">
+    
+    <!-- Logo + lang toggle -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;">
+      <div style="font-size:11px;color:var(--color-text-tertiary);cursor:pointer;border:0.5px solid var(--color-border-tertiary);padding:4px 10px;border-radius:6px;" onclick="toggleLang()">EN / AR</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-weight:800;font-size:17px;color:#0D1B2E;" id="logoText">kid</span><span style="font-weight:800;font-size:17px;color:#F5A800;">Speak</span>
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none"><circle cx="12" cy="18" r="8" fill="#F5A800"/><path d="M18 13 Q21 10 24 13" stroke="#F5A800" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M20 10 Q24 6 28 10" stroke="#F5A800" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <div style="margin-bottom:20px;text-align:right;">
+      <h1 style="font-size:18px;font-weight:700;color:var(--color-text-primary);margin:0 0 4px;" id="title">مرحباً بك 👋</h1>
+      <p style="font-size:12px;color:var(--color-text-tertiary);margin:0;" id="subtitle">سجّل دخولك لمتابعة تقدم طفلك</p>
+    </div>
+
+    <!-- Fields -->
+    <div style="margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:500;color:var(--color-text-secondary);display:block;margin-bottom:5px;text-align:right;" id="emailLabel">رقم الهاتف أو البريد الإلكتروني</label>
+      <input type="text" placeholder="0551234567" style="width:100%;padding:9px 12px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:12px;text-align:right;background:var(--color-background-secondary);color:var(--color-text-primary);direction:rtl;" readonly/>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+        <span style="font-size:10px;color:#F5A800;cursor:pointer;" id="forgotText">نسيت كلمة المرور؟</span>
+        <label style="font-size:11px;font-weight:500;color:var(--color-text-secondary);" id="passLabel">كلمة المرور</label>
+      </div>
+      <input type="password" value="••••••••" style="width:100%;padding:9px 12px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:12px;background:var(--color-background-secondary);color:var(--color-text-primary);" readonly/>
+    </div>
+
+    <div style="background:#F5A800;color:#fff;text-align:center;padding:10px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:14px;" id="signInBtn">
+      تسجيل الدخول
+    </div>
+
+    <p style="text-align:center;font-size:11px;color:var(--color-text-tertiary);margin:0 0 16px;" id="registerText">
+      لا تملك حساباً؟ <span style="color:#F5A800;cursor:pointer;font-weight:500;">سجّل طفلك الآن</span>
+    </p>
+
+    <!-- Staff login toggle -->
+    <div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:14px;text-align:center;">
+      <span style="font-size:11px;color:var(--color-text-tertiary);" id="staffToggleText">أنت موظف؟ </span>
+      <span style="font-size:11px;color:#185FA5;cursor:pointer;font-weight:500;" id="staffToggleBtn" onclick="toggleMode()">دخول الفريق ←</span>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Brand panel -->
+  <div style="background:#0D1B2E;padding:32px 24px;display:flex;flex-direction:column;justify-content:space-between;">
+    
+    <div>
+      <!-- Mode tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:22px;justify-content:flex-end;" id="modeTabs">
+        <button class="tab-btn tab-inactive" onclick="setMode('staff')" id="staffTab">الفريق</button>
+        <button class="tab-btn tab-active" onclick="setMode('parent')" id="parentTab">ولي الأمر</button>
+      </div>
+
+      <div id="parentContent">
+        <div style="background:rgba(245,168,0,0.12);border:0.5px solid rgba(245,168,0,0.25);border-radius:20px;padding:4px 14px;display:inline-block;margin-bottom:16px;">
+          <span style="font-size:11px;color:#F5A800;">بوابة الأولياء</span>
+        </div>
+        <h2 style="color:#fff;font-size:20px;font-weight:800;margin:0 0 10px;line-height:1.3;text-align:right;">تابع تقدم طفلك<br><span style="color:#F5A800;">بكل سهولة</span></h2>
+        <p style="color:rgba(255,255,255,0.4);font-size:12px;line-height:1.7;margin:0 0 20px;text-align:right;">راقب الحصص، التقييمات، والمدفوعات من مكان واحد</p>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+            <div style="text-align:right;"><div style="font-size:12px;color:#fff;font-weight:500;">جدول حصص طفلك</div><div style="font-size:10px;color:rgba(255,255,255,0.3);">مواعيد الجلسات والتذكيرات</div></div>
+            <div style="width:28px;height:28px;background:rgba(94,196,160,0.15);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="width:8px;height:8px;background:#5EC4A0;border-radius:50%;"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+            <div style="text-align:right;"><div style="font-size:12px;color:#fff;font-weight:500;">تقييمات الأداء</div><div style="font-size:10px;color:rgba(255,255,255,0.3);">متابعة النمو والتطور</div></div>
+            <div style="width:28px;height:28px;background:rgba(123,143,245,0.15);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="width:8px;height:8px;background:#7B8FF5;border-radius:50%;"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end;">
+            <div style="text-align:right;"><div style="font-size:12px;color:#fff;font-weight:500;">حالة المدفوعات</div><div style="font-size:10px;color:rgba(255,255,255,0.3);">الفواتير والإيصالات</div></div>
+            <div style="width:28px;height:28px;background:rgba(245,168,0,0.15);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><div style="width:8px;height:8px;background:#F5A800;border-radius:50%;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="staffContent" style="display:none;">
+        <div style="background:rgba(24,95,165,0.2);border:0.5px solid rgba(24,95,165,0.4);border-radius:20px;padding:4px 14px;display:inline-block;margin-bottom:16px;">
+          <span style="font-size:11px;color:#7BB8F5;">بوابة الفريق</span>
+        </div>
+        <h2 style="color:#fff;font-size:20px;font-weight:800;margin:0 0 10px;line-height:1.3;text-align:right;">لوحة التحكم<br><span style="color:#7BB8F5;">الخاصة بك</span></h2>
+        <p style="color:rgba(255,255,255,0.4);font-size:12px;line-height:1.7;margin:0 0 20px;text-align:right;">ادخل ببريدك المهني وكلمة المرور</p>
+        <div style="background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;">
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-bottom:8px;text-align:right;">الأدوار المتاحة</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;">
+            <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(245,168,0,0.15);color:#F5A800;">Admin</span>
+            <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(94,196,160,0.15);color:#5EC4A0;">Teacher</span>
+            <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(123,143,245,0.15);color:#7B8FF5;">Psychologist</span>
+            <span style="font-size:10px;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);">Receptionist</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:10px;color:rgba(255,255,255,0.15);margin:0;text-align:center;">kidspeakdz.com · © 2026 KidSpeak</p>
+  </div>
+
+</div>
+
+<script>
+let isAr = true;
+let mode = 'parent';
+
+function toggleLang() {
+  isAr = !isAr;
+  if (isAr) {
+    document.getElementById('title').textContent = 'مرحباً بك 👋';
+    document.getElementById('subtitle').textContent = 'سجّل دخولك لمتابعة تقدم طفلك';
+    document.getElementById('emailLabel').textContent = 'رقم الهاتف أو البريد الإلكتروني';
+    document.getElementById('passLabel').textContent = 'كلمة المرور';
+    document.getElementById('forgotText').textContent = 'نسيت كلمة المرور؟';
+    document.getElementById('signInBtn').textContent = 'تسجيل الدخول';
+    document.getElementById('staffToggleText').textContent = 'أنت موظف؟ ';
+    document.getElementById('staffToggleBtn').textContent = 'دخول الفريق ←';
+    document.getElementById('registerText').innerHTML = 'لا تملك حساباً؟ <span style="color:#F5A800;cursor:pointer;font-weight:500;">سجّل طفلك الآن</span>';
+  } else {
+    document.getElementById('title').textContent = 'Welcome Back 👋';
+    document.getElementById('subtitle').textContent = 'Sign in to track your child\'s progress';
+    document.getElementById('emailLabel').textContent = 'Phone or Email';
+    document.getElementById('passLabel').textContent = 'Password';
+    document.getElementById('forgotText').textContent = 'Forgot password?';
+    document.getElementById('signInBtn').textContent = 'Sign In';
+    document.getElementById('staffToggleText').textContent = 'Are you staff? ';
+    document.getElementById('staffToggleBtn').textContent = 'Staff Login →';
+    document.getElementById('registerText').innerHTML = 'No account? <span style="color:#F5A800;cursor:pointer;font-weight:500;">Register your child</span>';
+  }
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('parentContent').style.display = m === 'parent' ? 'block' : 'none';
+  document.getElementById('staffContent').style.display = m === 'staff' ? 'block' : 'none';
+  document.getElementById('parentTab').className = 'tab-btn ' + (m === 'parent' ? 'tab-active' : 'tab-inactive');
+  document.getElementById('staffTab').className = 'tab-btn ' + (m === 'staff' ? 'tab-active' : 'tab-inactive');
+  document.getElementById('subtitle').textContent = m === 'parent' 
+    ? (isAr ? 'سجّل دخولك لمتابعة تقدم طفلك' : 'Track your child\'s progress')
+    : (isAr ? 'ادخل ببريدك المهني' : 'Sign in with your work email');
+}
+
+function toggleMode() {
+  setMode(mode === 'parent' ? 'staff' : 'parent');
+}
+</script>

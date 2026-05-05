@@ -1,0 +1,33 @@
+{
+  "name": "@workspace/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts",
+    "./helpers": "./src/helpers.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "push:dev": "cross-env DATABASE_URL=file:../../artifacts/api-server/dev.db DATABASE_PROVIDER=sqlite drizzle-kit push --config ./drizzle.config.ts",
+    "push:prod": "drizzle-kit push --config ./drizzle.config.ts",
+    "push-force:dev": "cross-env DATABASE_URL=file:../../artifacts/api-server/dev.db DATABASE_PROVIDER=sqlite drizzle-kit push --force --config ./drizzle.config.ts"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.15.7",
+    "drizzle-orm": "catalog:",
+    "drizzle-zod": "^0.8.3",
+    "zod": "catalog:"
+  },
+  "optionalDependencies": {
+    "pg": "^8.13.3"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/pg": "^8.11.11",
+    "cross-env": "^7.0.3",
+    "drizzle-kit": "^0.31.9",
+    "vitest": "^4.1.4"
+  }
+}

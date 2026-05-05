@@ -1,0 +1,714 @@
+import { useState, useEffect } from "react";
+import { useListRequests, useCreateRequest, useDeleteRequest, useSubmitConsent, useRequestConsents, useGetMe } from "@workspace/api-client-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { useLanguage } from "@/contexts/language-context";
+import { useToast } from "@/hooks/use-toast";
+import { MapPin, Plus, Trash2, Calendar, Package, CheckCircle, XCircle, Clock, Users, DollarSign, Target, GraduationCap, BookOpen, UserCheck, Globe } from "lucide-react";
+import { format } from "date-fns";
+
+function safeFmt(dateStr: string | null | undefined, fmt: string): string {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return String(dateStr);
+  return format(d, fmt);
+}
+
+// ── Types ──────────────────────────────────────────────────────────────────
+
+interface AudienceOptions {
+  levels: { id: number; name: string }[];
+  groups:  { id: number; name: string }[];
+  teachers: { id: number; name: string }[];
+}
+
+type TargetType = "all" | "level" | "group" | "teacher";
+
+// ── Consent List Dialog ────────────────────────────────────────────────────
+
+function ConsentListDialog({ requestId, title, targetLabel, onClose }: {
+  requestId: number;
+  title: string;
+  targetLabel?: string;
+  onClose: () => void;
+}) {
+  const { t } = useLanguage();
+  const rt = t.requests;
+  const { data: consents = [], isLoading } = useRequestConsents(requestId);
+
+  const approved = consents.filter((c) => (c as any).status === "approved").length;
+  const declined = consents.filter((c) => (c as any).status === "declined").length;
+
+  return (
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{rt.consentsTitle}</DialogTitle>
+        <p className="text-xs text-muted-foreground">{title}</p>
+        {targetLabel && targetLabel !== "all" && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <Target className="w-3 h-3 text-[#1B2E8F]" />
+            <span className="text-xs font-medium text-[#1B2E8F]">{targetLabel}</span>
+          </div>
+        )}
+      </DialogHeader>
+
+      {/* Consent summary bar */}
+      {!isLoading && consents.length > 0 && (
+        <div className="flex gap-3 p-3 rounded-xl bg-muted/30 border">
+          <div className="flex-1 text-center">
+            <p className="text-lg font-bold text-emerald-600">{approved}</p>
+            <p className="text-xs text-muted-foreground">{rt.approved}</p>
+          </div>
+          <div className="w-px bg-border" />
+          <div className="flex-1 text-center">
+            <p className="text-lg font-bold text-red-600">{declined}</p>
+            <p className="text-xs text-muted-foreground">{rt.declined}</p>
+          </div>
+          <div className="w-px bg-border" />
+          <div className="flex-1 text-center">
+            <p className="text-lg font-bold text-gray-700">{consents.length}</p>
+            <p className="text-xs text-muted-foreground">Total</p>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2 max-h-72 overflow-y-auto py-1">
+        {isLoading ? (
+          <p className="text-center text-muted-foreground text-sm py-4">{rt.loading}</p>
+        ) : consents.length === 0 ? (
+          <p className="text-center text-muted-foreground text-sm py-4">No responses yet.</p>
+        ) : (
+          consents.map((c) => (
+            <div key={(c as any).id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-bold" style={{ color: "#1B2E8F" }}>
+                  {((c as any).parentName || "?")[0].toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{(c as any).parentName || "Parent"}</p>
+                  <p className="text-xs text-muted-foreground">{safeFmt((c as any).respondedAt, "MMM d, yyyy")}</p>
+                </div>
+              </div>
+              <Badge
+                className="text-xs font-semibold"
+                style={(c as any).status === "approved"
+                  ? { backgroundColor: "#16a34a20", color: "#16a34a", border: "1px solid #16a34a40" }
+                  : { backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262640" }}
+              >
+                {(c as any).status === "approved" ? rt.approved : rt.declined}
+              </Badge>
+            </div>
+          ))
+        )}
+      </div>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button variant="outline" onClick={onClose}>{t.groups.cancel}</Button>
+        </DialogClose>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
+// ── Target badge component ─────────────────────────────────────────────────
+
+function TargetBadge({ targetType, targetLabel, rt }: { targetType: string; targetLabel: string; rt: any }) {
+  if (targetType === "all") {
+    return (
+      <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+        style={{ backgroundColor: "#1B2E8F10", color: "#1B2E8F", border: "1px solid #1B2E8F20" }}>
+        <Globe className="w-3 h-3" />
+        {rt.targetAll}
+      </span>
+    );
+  }
+  const icon = targetType === "level" ? <BookOpen className="w-3 h-3" />
+    : targetType === "group" ? <Users className="w-3 h-3" />
+    : <UserCheck className="w-3 h-3" />;
+
+  return (
+    <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+      style={{ backgroundColor: "#F5A60015", color: "#b37800", border: "1px solid #F5A60040" }}>
+      {icon}
+      {targetLabel}
+    </span>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────
+
+function getLang(en: string | null | undefined, ar: string | null | undefined, language: string): string {
+  if (language === "ar") return ar || en || "";
+  return en || ar || "";
+}
+
+export default function RequestsPage() {
+  const { t, language } = useLanguage();
+  const { toast } = useToast();
+  const rt = t.requests;
+
+  const { data: me } = useGetMe();
+  const isAdmin = (me as any)?.role === "admin";
+  const isTeacher = (me as any)?.role === "teacher";
+  const isStaff = isAdmin || isTeacher;
+  const isParent = (me as any)?.role === "parent";
+  const isTeacher = (me as any)?.role === "teacher";
+  const isStaff = isAdmin || isTeacher;
+  const isParent = (me as any)?.role === "parent";
+  const userId = (me as any)?.id;
+
+  const { data: requests = [], isLoading, refetch } = useListRequests();
+  const { mutate: create, isPending: isCreating } = useCreateRequest();
+  const { mutate: deleteReq } = useDeleteRequest();
+  const { mutate: submitConsent } = useSubmitConsent();
+
+  // Create form state
+  const [open, setOpen] = useState(false);
+  const [reqTitle, setReqTitle] = useState("");
+  const [reqTitleAr, setReqTitleAr] = useState("");
+  const [desc, setDesc] = useState("");
+  const [descAr, setDescAr] = useState("");
+  const [date, setDate] = useState("");
+  const [itemsText, setItemsText] = useState("");
+  const [itemsTextAr, setItemsTextAr] = useState("");
+  const [cost, setCost] = useState("");
+  const [targetType, setTargetType] = useState<TargetType>(isTeacher ? "group" : "all");
+  const [targetId, setTargetId] = useState<string>("");
+  const [audienceOptions, setAudienceOptions] = useState<AudienceOptions>({ levels: [], groups: [], teachers: [] });
+  const [audienceLoading, setAudienceLoading] = useState(false);
+
+  // Consent dialog
+  const [consentDialog, setConsentDialog] = useState<{ id: number; title: string; targetLabel: string } | null>(null);
+
+  // Load audience options when modal opens (staff: admin or teacher)
+  useEffect(() => {
+    if (!open || !isStaff) return;
+    setAudienceLoading(true);
+    fetch("/api/requests/audience-options", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data) => setAudienceOptions(data))
+      .catch(() => {})
+      .finally(() => setAudienceLoading(false));
+  }, [open, isStaff]);
+
+  // Reset targetId when targetType changes
+  useEffect(() => { setTargetId(""); }, [targetType]);
+
+  const resetForm = () => {
+    setReqTitle(""); setReqTitleAr(""); setDesc(""); setDescAr(""); setDate(""); setItemsText(""); setItemsTextAr(""); setCost("");
+    setTargetType(isTeacher ? "group" : "all"); setTargetId("");
+  };
+
+  const handleCreate = () => {
+    if (!reqTitle.trim() || !desc.trim() || !date) return;
+    const needsId = targetType !== "all";
+    if (needsId && !targetId) return;
+
+    const items = itemsText.split("\n").map((s) => s.trim()).filter(Boolean);
+    const itemsAr = itemsTextAr.split("\n").map((s) => s.trim()).filter(Boolean);
+
+    // Use raw fetch to pass targetType/targetId since orval hook may not have them
+    fetch("/api/requests", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: reqTitle.trim(),
+        titleAr: reqTitleAr.trim() || undefined,
+        description: desc.trim(),
+        descriptionAr: descAr.trim() || undefined,
+        date,
+        requiredItems: items,
+        requiredItemsAr: itemsAr,
+        cost: cost ? parseInt(cost) : undefined,
+        targetType,
+        targetId: targetId ? parseInt(targetId) : undefined,
+      }),
+    })
+      .then(async (r) => {
+        if (!r.ok) throw new Error();
+        toast({ title: rt.created });
+        setOpen(false);
+        resetForm();
+        refetch();
+      })
+      .catch(() => toast({ title: "Error", variant: "destructive" }));
+  };
+
+  const handleConsent = (requestId: number, status: "approved" | "declined") => {
+    submitConsent(
+      { requestId, status },
+      {
+        onSuccess: () => { toast({ title: rt.consentSubmitted }); refetch(); },
+        onError: () => toast({ title: "Error", variant: "destructive" }),
+      }
+    );
+  };
+
+  // Count unseen (no consent yet) activities for parents
+  const unseenCount = isParent
+    ? (requests as any[]).filter((r) => !(r as any).myConsentStatus).length
+    : 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold tracking-tight">{rt.title}</h1>
+            {isParent && unseenCount > 0 && (
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white" style={{ backgroundColor: "#F5A600", color: "#1B2E8F" }}>
+                {unseenCount}
+              </span>
+            )}
+          </div>
+          <p className="text-muted-foreground text-sm mt-1">{isStaff ? rt.adminSubtitle : rt.subtitle}</p>
+        </div>
+        {isStaff && (
+          <Button
+            style={{ backgroundColor: "#F5A600", color: "#1B2E8F" }}
+            className="font-semibold"
+            onClick={() => setOpen(true)}
+          >
+            <Plus className="w-4 h-4 me-2" />
+            {rt.addRequest}
+          </Button>
+        )}
+      </div>
+
+      {/* List */}
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">{rt.loading}</div>
+      ) : (requests as any[]).length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <MapPin className="w-12 h-12 mx-auto mb-3 opacity-20" />
+          <p>{rt.empty}</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+          {(requests as any[]).map((req) => {
+            const isPast = new Date(req.date) < new Date();
+            const hasResponded = !!req.myConsentStatus;
+            const isNew = isParent && !hasResponded && !isPast;
+
+            return (
+              <Card key={req.id} className="overflow-hidden hover:shadow-lg transition-all">
+                {/* Top accent bar */}
+                <div className="h-1.5 w-full" style={{ background: "linear-gradient(90deg, #1B2E8F, #F5A600)" }} />
+                <CardContent className="p-5 space-y-4">
+
+                  {/* Title + date + NEW badge */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="relative">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: "#1B2E8F15" }}
+                        >
+                          <MapPin className="w-5 h-5" style={{ color: "#1B2E8F" }} />
+                        </div>
+                        {isNew && (
+                          <span className="absolute -top-1 -end-1 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center text-white" style={{ backgroundColor: "#F5A600", color: "#1B2E8F" }}>
+                            {rt.newActivityBadge}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-base leading-snug">{getLang(req.title, req.titleAr, language)}</h3>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {req.date}
+                          </span>
+                          {req.cost ? (
+                            <span className="flex items-center gap-1">
+                              <DollarSign className="w-3 h-3" />
+                              {req.cost.toLocaleString()} د.ج
+                            </span>
+                          ) : (
+                            <Badge variant="outline" className="text-emerald-700 border-emerald-300 bg-emerald-50 text-xs">
+                              {rt.free}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    {(isAdmin || (isTeacher && req.authorId === userId)) && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="shrink-0 text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8"
+                        onClick={() => deleteReq(req.id, { onSuccess: () => refetch() })}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-sm text-muted-foreground leading-relaxed">{getLang(req.description, req.descriptionAr, language)}</p>
+
+                  {/* Required items */}
+                  {req.requiredItems && req.requiredItems.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
+                        <Package className="w-3 h-3" />
+                        {rt.requiredItems}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(language === "ar" && req.requiredItemsAr?.length > 0 ? req.requiredItemsAr : req.requiredItems).map((item: string, i: number) => (
+                          <span key={i} className="text-xs px-2.5 py-1 rounded-full border font-medium" style={{ backgroundColor: "#F5A60010", borderColor: "#F5A60040", color: "#1B2E8F" }}>
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Staff: target audience + consent stats — admin sees all, teacher sees their own */}
+                  {(isAdmin || (isTeacher && req.authorId === userId)) && (
+                    <div className="space-y-2 pt-3 border-t">
+                      {/* Target audience */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{rt.targetLabel}:</span>
+                        <TargetBadge targetType={req.targetType || "all"} targetLabel={req.targetLabel || rt.targetAll} rt={rt} />
+                      </div>
+                      {/* Consent stats */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 text-sm">
+                          <span className="flex items-center gap-1 text-emerald-700">
+                            <CheckCircle className="w-4 h-4" />
+                            {req.approvedCount}
+                          </span>
+                          <span className="flex items-center gap-1 text-red-600">
+                            <XCircle className="w-4 h-4" />
+                            {req.declinedCount}
+                          </span>
+                          <span className="text-muted-foreground text-xs flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {req.totalResponses} {req.totalResponses === 1 ? "response" : "responses"}
+                          </span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs"
+                          onClick={() => setConsentDialog({ id: req.id, title: req.title, targetLabel: req.targetLabel || "all" })}
+                        >
+                          {rt.viewConsents}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Parent: consent status or buttons */}
+                  {isParent && hasResponded && (
+                    <div className="pt-3 border-t flex items-center justify-between">
+                      <Badge
+                        className="text-xs font-semibold"
+                        style={req.myConsentStatus === "approved"
+                          ? { backgroundColor: "#16a34a20", color: "#16a34a", border: "1px solid #16a34a40" }
+                          : { backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262640" }}
+                      >
+                        {req.myConsentStatus === "approved"
+                          ? <><CheckCircle className="w-3 h-3 me-1 inline" />{rt.myConsentApproved}</>
+                          : <><XCircle className="w-3 h-3 me-1 inline" />{rt.myConsentDeclined}</>}
+                      </Badge>
+                      {!isPast && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="h-8 text-xs font-semibold"
+                            style={{ backgroundColor: "#16a34a", color: "white" }}
+                            onClick={() => handleConsent(req.id, "approved")}
+                          >
+                            <CheckCircle className="w-3 h-3 me-1" />
+                            {rt.approve}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 text-xs font-semibold border-red-200 text-red-600 hover:bg-red-50"
+                            onClick={() => handleConsent(req.id, "declined")}
+                          >
+                            <XCircle className="w-3 h-3 me-1" />
+                            {rt.decline}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {isParent && !hasResponded && !isPast && (
+                    <div className="flex gap-2 pt-3 border-t">
+                      <Button
+                        className="flex-1 font-semibold h-9"
+                        style={{ backgroundColor: "#16a34a", color: "white" }}
+                        onClick={() => handleConsent(req.id, "approved")}
+                      >
+                        <CheckCircle className="w-4 h-4 me-1.5" />
+                        {rt.approve}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 font-semibold h-9 border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => handleConsent(req.id, "declined")}
+                      >
+                        <XCircle className="w-4 h-4 me-1.5" />
+                        {rt.decline}
+                      </Button>
+                    </div>
+                  )}
+
+                  {isParent && isPast && !hasResponded && (
+                    <div className="pt-3 border-t">
+                      <Badge variant="outline" className="text-muted-foreground text-xs">
+                        <Clock className="w-3 h-3 me-1" />
+                        Activity passed
+                      </Badge>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Create Dialog ── */}
+      <Dialog open={open} onOpenChange={(o) => { if (!o) { setOpen(false); resetForm(); } else setOpen(true); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{rt.addRequestTitle}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2 max-h-[65vh] overflow-y-auto pe-1">
+
+            {/* Title */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{rt.activityTitle} *</label>
+                <Input placeholder={rt.activityTitlePlaceholder} value={reqTitle} onChange={(e) => setReqTitle(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{(rt as any).titleArLabel ?? "العنوان بالعربية"} <span className="text-muted-foreground text-xs">(اختياري)</span></label>
+                <Input dir="rtl" placeholder="مثال: رحلة ميدانية" value={reqTitleAr} onChange={(e) => setReqTitleAr(e.target.value)} />
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{rt.descriptionLabel}</label>
+              <Textarea rows={2} placeholder={rt.descriptionPlaceholder} value={desc} onChange={(e) => setDesc(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{(rt as any).descriptionArLabel ?? "الوصف بالعربية"} <span className="text-muted-foreground text-xs">(اختياري)</span></label>
+              <Textarea dir="rtl" rows={2} placeholder="اوصف النشاط بالعربية..." value={descAr} onChange={(e) => setDescAr(e.target.value)} />
+            </div>
+
+            {/* Date */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{rt.dateLabel} *</label>
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+
+            {/* Required Items */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{rt.requiredItemsLabel}</label>
+                <p className="text-xs text-muted-foreground">{rt.requiredItemsHelp}</p>
+                <Textarea
+                  rows={3}
+                  placeholder={"Water bottle\nCap\nSummer clothes"}
+                  value={itemsText}
+                  onChange={(e) => setItemsText(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">{(rt as any).requiredItemsArLabel ?? "المستلزمات بالعربية"} <span className="text-muted-foreground text-xs">(اختياري)</span></label>
+                <p className="text-xs text-muted-foreground">كل عنصر في سطر</p>
+                <Textarea
+                  dir="rtl"
+                  rows={3}
+                  placeholder={"قارورة ماء\nقبعة\nملابس صيفية"}
+                  value={itemsTextAr}
+                  onChange={(e) => setItemsTextAr(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Cost */}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{rt.costLabel}</label>
+              <Input type="number" placeholder={rt.costPlaceholder} value={cost} onChange={(e) => setCost(e.target.value)} />
+            </div>
+
+            {/* ── Target Audience Section ── */}
+            <div className="space-y-3 p-4 rounded-xl border-2" style={{ borderColor: "#1B2E8F20", backgroundColor: "#1B2E8F04" }}>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#1B2E8F" }}>
+                  <Target className="w-4 h-4 text-[#F5A600]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: "#1B2E8F" }}>{rt.targetAudienceSection}</p>
+                  <p className="text-xs text-muted-foreground">{rt.targetAudienceHelp}</p>
+                </div>
+              </div>
+
+              {/* Target type selector */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Audience Type</label>
+                <Select value={targetType} onValueChange={(v) => setTargetType(v as TargetType)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isStaff && (
+                      <SelectItem value="all">
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-4 h-4 text-muted-foreground" />
+                          {rt.targetTypeAll}
+                        </div>
+                      </SelectItem>
+                    )}
+                    <SelectItem value="level">
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-4 h-4 text-[#F5A600]" />
+                        {rt.targetTypeLevel}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="group">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#1B2E8F]" />
+                        {rt.targetTypeGroup}
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="teacher">
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-purple-600" />
+                        {rt.targetTypeTeacher}
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Dynamic secondary selector */}
+              {targetType === "level" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{rt.targetTypeLevel}</label>
+                  {audienceLoading ? (
+                    <p className="text-xs text-muted-foreground py-1">{rt.loading}</p>
+                  ) : audienceOptions.levels.length === 0 ? (
+                    <p className="text-xs text-amber-600 py-1">{rt.noLevelsAvailable}</p>
+                  ) : (
+                    <Select value={targetId} onValueChange={setTargetId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={rt.selectLevel} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {audienceOptions.levels.map((l) => (
+                          <SelectItem key={l.id} value={String(l.id)}>
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="w-3 h-3 text-[#F5A600]" />
+                              {l.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+
+              {targetType === "group" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{rt.targetTypeGroup}</label>
+                  {audienceLoading ? (
+                    <p className="text-xs text-muted-foreground py-1">{rt.loading}</p>
+                  ) : audienceOptions.groups.length === 0 ? (
+                    <p className="text-xs text-amber-600 py-1">{rt.noGroupsAvailable}</p>
+                  ) : (
+                    <Select value={targetId} onValueChange={setTargetId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={rt.selectGroup} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {audienceOptions.groups.map((g) => (
+                          <SelectItem key={g.id} value={String(g.id)}>
+                            <div className="flex items-center gap-2">
+                              <Users className="w-3 h-3 text-[#1B2E8F]" />
+                              {g.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+
+              {targetType === "teacher" && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{rt.targetTypeTeacher}</label>
+                  {audienceLoading ? (
+                    <p className="text-xs text-muted-foreground py-1">{rt.loading}</p>
+                  ) : audienceOptions.teachers.length === 0 ? (
+                    <p className="text-xs text-amber-600 py-1">{rt.noTeachersAvailable}</p>
+                  ) : (
+                    <Select value={targetId} onValueChange={setTargetId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={rt.selectTeacher} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {audienceOptions.teachers.map((tc) => (
+                          <SelectItem key={tc.id} value={String(tc.id)}>
+                            <div className="flex items-center gap-2">
+                              <UserCheck className="w-3 h-3 text-purple-600" />
+                              {tc.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" onClick={resetForm}>{t.groups.cancel}</Button>
+            </DialogClose>
+            <Button
+              style={{ backgroundColor: "#F5A600", color: "#1B2E8F" }}
+              className="font-semibold"
+              onClick={handleCreate}
+              disabled={isCreating || !reqTitle.trim() || !desc.trim() || !date || (targetType !== "all" && !targetId)}
+            >
+              {isCreating ? rt.creating : rt.submit}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Consents Dialog (admin only) */}
+      {consentDialog && (
+        <Dialog open={!!consentDialog} onOpenChange={(o) => { if (!o) setConsentDialog(null); }}>
+          <ConsentListDialog
+            requestId={consentDialog.id}
+            title={consentDialog.title}
+            targetLabel={consentDialog.targetLabel}
+            onClose={() => setConsentDialog(null)}
+          />
+        </Dialog>
+      )}
+    </div>
+  );
+}

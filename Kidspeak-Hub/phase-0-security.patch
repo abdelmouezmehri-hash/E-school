@@ -1,0 +1,178 @@
+# Phase 0 — Security Patches for Kidspeak Hub
+# Generated: 2026-04-30T12:14:26Z
+#
+# Apply with: cd ~/workspace/Kidspeak-Hub && git apply phase-0-security.patch
+# Or review individual files and copy-paste.
+#
+
+--- a/artifacts/api-server/src/middlewares/auth.ts	2026-04-30 12:12:10.045630275 +0000
++++ b/artifacts/api-server/src/middlewares/auth.ts	2026-04-30 12:12:20.665630258 +0000
+@@ -39,8 +39,13 @@
+   next();
+ }
+ 
+-export async function requireRole(roles: string[]) {
+-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
++/**
++ * Middleware factory: gate a route to one of the listed base roles.
++ * Use AFTER requireAuth, e.g.
++ *   router.post("/x", requireAuth, requireRole(["admin", "teacher"]), handler);
++ */
++export function requireRole(roles: string[]) {
++  return (req: Request, res: Response, next: NextFunction): void => {
+     const user = (req as Request & { user?: AuthUser }).user;
+     if (!user || !roles.includes(user.role)) {
+       res.status(403).json({ error: "Forbidden" });
+@@ -54,8 +59,8 @@
+  * Middleware for custom-role users: verifies the user's custom role includes
+  * a specific permission key. Falls through for base-role users (they use requireRole).
+  */
+-export async function requirePermission(key: string) {
+-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
++export function requirePermission(key: string) {
++  return (req: Request, res: Response, next: NextFunction): void => {
+     const user = (req as Request & { user?: AuthUser }).user;
+     if (!user) {
+       res.status(401).json({ error: "Unauthorized" });
+--- a/artifacts/api-server/src/routes/evaluations.ts	2026-04-30 12:12:10.050630275 +0000
++++ b/artifacts/api-server/src/routes/evaluations.ts	2026-04-30 12:12:35.293630235 +0000
+@@ -2,7 +2,7 @@
+ import { eq, and } from "drizzle-orm";
+ import { db, evaluationsTable, studentsTable } from "@workspace/db";
+ import { CreateEvaluationBody, ListEvaluationsQueryParams, UpdateEvaluationParams, DeleteEvaluationParams } from "@workspace/api-zod";
+-import { requireAuth } from "../middlewares/auth";
++import { requireAuth, requireRole } from "../middlewares/auth";
+ 
+ const router: IRouter = Router();
+ 
+@@ -38,7 +38,7 @@
+   })));
+ });
+ 
+-router.post("/evaluations", requireAuth, async (req: Request, res: Response): Promise<void> => {
++router.post("/evaluations", requireAuth, requireRole(["admin", "teacher"]), async (req: Request, res: Response): Promise<void> => {
+   const parsed = CreateEvaluationBody.safeParse(req.body);
+   if (!parsed.success) {
+     res.status(400).json({ error: parsed.error.message });
+@@ -70,7 +70,7 @@
+   });
+ });
+ 
+-router.put("/evaluations/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
++router.put("/evaluations/:id", requireAuth, requireRole(["admin", "teacher"]), async (req: Request, res: Response): Promise<void> => {
+   const params = UpdateEvaluationParams.safeParse(req.params);
+   if (!params.success) {
+     res.status(400).json({ error: params.error.message });
+@@ -108,7 +108,7 @@
+   });
+ });
+ 
+-router.delete("/evaluations/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
++router.delete("/evaluations/:id", requireAuth, requireRole(["admin"]), async (req: Request, res: Response): Promise<void> => {
+   const params = DeleteEvaluationParams.safeParse(req.params);
+   if (!params.success) {
+     res.status(400).json({ error: params.error.message });
+--- a/artifacts/api-server/src/routes/observations.ts	2026-04-30 12:12:10.055630275 +0000
++++ b/artifacts/api-server/src/routes/observations.ts	2026-04-30 12:12:53.720630206 +0000
+@@ -1,7 +1,7 @@
+ import { Router, type IRouter, type Request, type Response } from "express";
+ import { eq, desc } from "drizzle-orm";
+ import { db, observationsTable, usersTable } from "@workspace/db";
+-import { requireAuth } from "../middlewares/auth";
++import { requireAuth, requireRole } from "../middlewares/auth";
+ 
+ const router: IRouter = Router();
+ 
+@@ -55,7 +55,7 @@
+   res.json(rows.map(r => ({ ...r, authorName: r.authorName ?? "Unknown", createdAt: r.createdAt.toISOString() })));
+ });
+ 
+-router.post("/observations", requireAuth, async (req: Request, res: Response): Promise<void> => {
++router.post("/observations", requireAuth, requireRole(["admin", "teacher", "psychologist"]), async (req: Request, res: Response): Promise<void> => {
+   const user = (req as any).user;
+   const data = validateCreateObs(req.body);
+   if (!data) {
+@@ -88,12 +88,34 @@
+ });
+ 
+ router.delete("/observations/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
++  const user = (req as any).user;
+   const id = parseInt(req.params.id);
+   if (isNaN(id)) {
+     res.status(400).json({ error: "Invalid ID" });
+     return;
+   }
+ 
++  // Authorization: admin can delete any observation; other staff can delete only their own.
++  // Parents and other non-staff roles cannot delete observations at all.
++  if (user.role !== "admin") {
++    if (!["teacher", "psychologist"].includes(user.role)) {
++      res.status(403).json({ error: "Forbidden" });
++      return;
++    }
++    const [existing] = await db
++      .select({ authorId: observationsTable.authorId })
++      .from(observationsTable)
++      .where(eq(observationsTable.id, id));
++    if (!existing) {
++      res.status(404).json({ error: "Observation not found" });
++      return;
++    }
++    if (existing.authorId !== user.id) {
++      res.status(403).json({ error: "You can only delete your own observations" });
++      return;
++    }
++  }
++
+   const [obs] = await db.delete(observationsTable).where(eq(observationsTable.id, id)).returning({ id: observationsTable.id });
+   if (!obs) {
+     res.status(404).json({ error: "Observation not found" });
+--- a/artifacts/api-server/src/routes/expenses.ts	2026-04-30 12:12:10.060630275 +0000
++++ b/artifacts/api-server/src/routes/expenses.ts	2026-04-30 12:13:12.948630176 +0000
+@@ -2,7 +2,7 @@
+ import { eq, and, gte, lte, sql } from "drizzle-orm";
+ import { db, expensesTable } from "@workspace/db";
+ import { CreateExpenseBody, ListExpensesQueryParams, UpdateExpenseParams, DeleteExpenseParams } from "@workspace/api-zod";
+-import { requireAuth } from "../middlewares/auth";
++import { requireAuth, requireRole } from "../middlewares/auth";
+ 
+ const router: IRouter = Router();
+ 
+@@ -41,7 +41,7 @@
+   })));
+ });
+ 
+-router.post("/expenses", requireAuth, async (req: Request, res: Response): Promise<void> => {
++router.post("/expenses", requireAuth, requireRole(["admin", "accountant"]), async (req: Request, res: Response): Promise<void> => {
+   const parsed = CreateExpenseBody.safeParse(req.body);
+   if (!parsed.success) {
+     res.status(400).json({ error: parsed.error.message });
+@@ -66,7 +66,7 @@
+   res.status(201).json({ ...expense, amount: parseFloat(expense.amount), createdAt: expense.createdAt.toISOString() });
+ });
+ 
+-router.put("/expenses/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
++router.put("/expenses/:id", requireAuth, requireRole(["admin", "accountant"]), async (req: Request, res: Response): Promise<void> => {
+   const params = UpdateExpenseParams.safeParse(req.params);
+   if (!params.success) {
+     res.status(400).json({ error: params.error.message });
+@@ -95,7 +95,7 @@
+   res.json({ ...expense, amount: parseFloat(expense.amount), createdAt: expense.createdAt.toISOString() });
+ });
+ 
+-router.delete("/expenses/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
++router.delete("/expenses/:id", requireAuth, requireRole(["admin"]), async (req: Request, res: Response): Promise<void> => {
+   const params = DeleteExpenseParams.safeParse(req.params);
+   if (!params.success) {
+     res.status(400).json({ error: params.error.message });
+--- a/artifacts/api-server/src/routes/students.ts	2026-04-30 12:12:10.065630275 +0000
++++ b/artifacts/api-server/src/routes/students.ts	2026-04-30 12:13:17.400630169 +0000
+@@ -699,7 +699,7 @@
+   });
+ });
+ 
+-router.get("/:id/growth-sessions", requireAuth, async (req: Request, res: Response) => {
++router.get("/students/:id/growth-sessions", requireAuth, async (req: Request, res: Response) => {
+   const me = (req as any).user;
+   const studentId = parseInt(req.params.id);
+   if (isNaN(studentId)) return res.status(400).json({ error: "Invalid student id" });

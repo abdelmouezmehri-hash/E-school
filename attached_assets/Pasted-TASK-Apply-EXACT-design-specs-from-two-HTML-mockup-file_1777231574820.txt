@@ -1,0 +1,76 @@
+TASK: Apply EXACT design specs from two HTML mockup files to the project.
+
+═══ INPUT FILES (in ~/workspace/migrations/) ═══
+1. navbar_redesign.html — designer mockup for the public landing page header
+2. kidspeak_logo_preview.html — designer mockup for the sidebar logo
+   (multiple options shown; USE ONLY "خيار A — نقاط ذهبية" / "Option A — gold dots")
+
+═══ TARGET FILES (modify these) ═══
+1. artifacts/kidspeak/src/pages/landing/index.tsx
+2. artifacts/kidspeak/src/components/layout.tsx
+
+═══ PART 1: HEADER (navbar_redesign.html → landing/index.tsx) ═══
+
+Open navbar_redesign.html and read the EXACT CSS values.
+Then in landing/index.tsx, find the <header> at the top of the JSX (search "sticky top-0").
+
+Apply EXACTLY these specs from the mockup:
+- Header background: rgba(255,255,255,0.97)
+- Header border-bottom: 1px solid #E5E7EB
+- Header height (desktop): 64px → use h-16
+- Header height (mobile): 56px → use h-14
+- Inner container max-width: 1100px → keep existing max-w-6xl
+- Inner padding: 0 24px → keep existing px-4 sm:px-6
+- Logo: <img src="/logo-color.png"> with EXACTLY style={{ height: 26, width: "auto" }}
+  (the mockup specifies height: 26px — DO NOT use any other value)
+- Nav links: font-size 14px, font-weight 500, color #374151
+- Login button: font-size 14px, font-weight 600, color #374151, transparent background, hover background #f3f4f6
+- Register button: font-size 14px, font-weight 800, color #0D1B2E, background #FFB500, hover background #f5a800
+
+═══ PART 2: SIDEBAR (kidspeak_logo_preview.html → layout.tsx) ═══
+
+Open kidspeak_logo_preview.html and find the section with class="sidebar"
+inside the <div> labeled "خيار A — نقاط ذهبية".
+
+In layout.tsx, find the SidebarLogo function (search "function SidebarLogo").
+
+Replace its return JSX so the layout matches Option A exactly:
+- Outer wrapper: padding 20px 16px 16px
+- Container: flex flex-col items-center gap-2.5 (logo and badge stacked, centered)
+- Logo: <img src="/logo_white.png"> with EXACTLY style={{ height: 60, width: "auto", display: "block" }}
+- Tagline as a gold badge below the logo:
+    <span style={{
+      fontSize: 9,
+      fontWeight: 700,
+      letterSpacing: "1.4px",
+      color: "#0D1B2E",
+      background: "rgba(245,168,0,0.85)",
+      padding: "3px 12px",
+      borderRadius: 20,
+      whiteSpace: "nowrap",
+    }}>
+      {isRTL ? "لنتكلم أولاً" : "Let's talk first"}
+    </span>
+- Keep the existing decorative divider <div> below (the gradient line)
+
+═══ STRICT RULES ═══
+
+1. Apply CSS values EXACTLY as written above. Do not "improve" them. Do not 
+   round numbers. If I say height: 26, write style={{ height: 26 }} — NOT 28, 
+   NOT 32, NOT h-7.
+
+2. Do NOT modify any other component, function, file, or section. Only the 
+   header in landing/index.tsx and the SidebarLogo function in layout.tsx.
+
+3. Do NOT touch the existing logos, fonts, or any other styles outside the
+   specified blocks.
+
+4. After changes:
+   - Run: pnpm typecheck (must show 0 errors)
+   - Run: rm -rf artifacts/kidspeak/dist && pnpm -C artifacts/kidspeak build
+   - Confirm both succeed
+
+5. Report back:
+   - The exact line numbers you changed in each file
+   - The before/after of each style block
+   - The typecheck and build results

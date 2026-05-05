@@ -1,0 +1,47 @@
+<h2>3 مقاربات لتنفيذ الميزات</h2>
+<p class="subtitle">اختر المقاربة التي تناسبك — أو قل لي إذا تريد مزيجاً</p>
+
+<div class="options" style="direction:rtl; gap: 20px;">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">أ</div>
+    <div class="content">
+      <h3>فلترة تلقائية + نموذج تقرير داخل الحصة</h3>
+      <p>صفحة الفوج تعرض تلقائياً فقط حصص المستخدم الذي سجّل دخوله (الأستاذ يرى حصصه، الأخصائية حصصها). عند الضغط على أيقونة التعديل ✏️، يفتح نموذج جانبي (Drawer) يحتوي معلومات الحصة + قسم التقرير (ما تحقق، ملاحظات، تقييم، الهدف القادم).</p>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>المزايا</h4><ul><li>تعديل بسيط على التصميم الحالي</li><li>كل شيء في مكان واحد</li></ul></div>
+        <div class="cons"><h4>العيوب</h4><ul><li>النموذج قد يكون مزدحماً في الـ Drawer</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">ب</div>
+    <div class="content">
+      <h3>فلترة تلقائية + صفحة تقرير مستقلة ⭐ مُوصى به</h3>
+      <p>صفحة الفوج تعرض فقط حصص المستخدم. كل حصة في القائمة تحتوي زر "تقرير الحصة". الضغط عليه يفتح صفحة مخصصة للتقرير تحتوي: ملخص الحصة، ملاحظات لكل طالب، التقييم، الهدف القادم. واضح ومنفصل.</p>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>المزايا</h4><ul><li>صفحة مخصصة = مساحة كافية للتقرير</li><li>سهل التوسع مستقبلاً</li><li>الأفضل للاستخدام اليومي</li></ul></div>
+        <div class="cons"><h4>العيوب</h4><ul><li>يتطلب إنشاء صفحة جديدة</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">ج</div>
+    <div class="content">
+      <h3>فلترة تلقائية + تقرير داخل نافذة منبثقة (Modal)</h3>
+      <p>نفس الفكرة لكن التقرير يفتح في نافذة منبثقة (Modal) بدلاً من صفحة جديدة. الأسرع للوصول، لكن أقل مساحة للملاحظات التفصيلية.</p>
+      <div class="pros-cons" style="margin-top:12px;">
+        <div class="pros"><h4>المزايا</h4><ul><li>لا تغادر الصفحة</li><li>سريع الوصول</li></ul></div>
+        <div class="cons"><h4>العيوب</h4><ul><li>مساحة محدودة للملاحظات</li><li>قد يكون مزدحماً مع ملاحظات لكل طالب</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:24px;background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:16px;direction:rtl;">
+  <strong>⭐ توصيتي: المقاربة (ب)</strong><br>
+  <span style="color:#555;font-size:14px;">لأن التقرير يحتوي ملاحظات لكل طالب — تحتاج مساحة كافية — وصفحة مستقلة هي الأنسب للاستخدام اليومي.</span>
+</div>

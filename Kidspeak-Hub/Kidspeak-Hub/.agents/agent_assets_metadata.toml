@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "AN4i4YHK2Y_5-9k3vLp_D"
+uri = "file://KIDSPEAK_TECHNICAL_BRIEF.md"
+type = "text"
+title = "Kidspeak LMS — Technical Brief"

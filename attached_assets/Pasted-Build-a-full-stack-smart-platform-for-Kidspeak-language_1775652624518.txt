@@ -1,0 +1,32 @@
+Build a full-stack smart platform for Kidspeak language school using Python (Flask/FastAPI) and a PostgreSQL database. The system must prioritize Parent Visibility and Psychological Tracking.
+1. Parent-Student Relationship (Privacy First):
+Strict Access Control: Each Parent account is linked to specific Student(s). A parent can ONLY see their own children’s data.
+Parent Hub: A dedicated dashboard showing a list of their children, their current level (Level 1 to 4), and their latest evaluation.
+2. Visual Progress & Smart Evaluation:
+Visual Analytics: Use charts (Chart.js) to show:
+Overall Progress (%) in the current level.
+Skill Breakdown: Radar or Bar charts for (Speaking, Confidence, Participation).
+Improvement Trend: A line graph showing progress over weeks.
+Auto-Score Logic: System calculates a 'Smart Score' based on weekly teacher inputs (1-10 scale).
+3. Psychologist & Administrative Roles:
+Psychologist Dashboard: Access to view student profiles and add "Behavioral & Learning Difficulty" notes.
+Admin Control: Admin assigns students to levels, manages teachers, and handles financial approvals.
+4. Integrated Consultation System:
+Free Consultation: Parents can click a button to request a one-time free meeting.
+Paid Consultation Workflow:
+Parent submits a request.
+Admin reviews the request.
+Admin sets the Price (DZD) and details.
+Once approved, the consultation status updates for the parent to 'Ready for Payment/Booking'.
+5. Teacher’s Weekly Input:
+Teachers must have a simple form to update:
+Attendance.
+Weekly Scores (Speaking, Confidence, Participation).
+Written observations.
+6. UI/UX & Branding:
+Bilingual Support: English & Arabic (Full RTL support).
+Branding: Use the White and Orange logo on a Dark Blue sidebar.
+Currency: Use Algerian Dinar (DZD / د.ج) for all transactions.
+Design: Modern, clean, and mobile-responsive (Tailwind CSS).
+7. Goal:
+Create a system where a parent feels their child is being monitored both academically and psychologically, with clear data-driven proof of improvement."

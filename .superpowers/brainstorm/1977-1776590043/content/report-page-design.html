@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>صفحة تقرير الحصة</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Tajawal', sans-serif; background: #f0f2f8; color: #1a2340; direction: rtl; padding: 24px; }
+
+.page-header {
+  background: white; border-radius: 16px;
+  padding: 20px 24px; margin-bottom: 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.back-btn {
+  display: flex; align-items: center; gap: 6px;
+  color: #64748b; font-size: 13px; cursor: pointer;
+  background: #f1f5f9; border: none; padding: 8px 14px;
+  border-radius: 8px; font-family: inherit; font-weight: 600;
+}
+.page-title { font-size: 20px; font-weight: 800; color: #1a2340; }
+.page-subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
+
+.session-info-bar {
+  background: linear-gradient(135deg, #1e3a5f, #0f2952);
+  border-radius: 14px; padding: 16px 24px; margin-bottom: 20px;
+  display: flex; align-items: center; gap: 24px; color: white;
+}
+.info-chip { display: flex; flex-direction: column; gap: 2px; }
+.info-chip-label { font-size: 11px; color: rgba(255,255,255,0.5); }
+.info-chip-value { font-size: 14px; font-weight: 700; }
+.info-divider { width: 1px; height: 36px; background: rgba(255,255,255,0.15); }
+
+.grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+
+.card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 16px; }
+.card-title { font-size: 15px; font-weight: 800; color: #1a2340; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card-title-icon { font-size: 18px; }
+
+.form-field { margin-bottom: 18px; }
+.form-label { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 7px; display: block; }
+.form-textarea {
+  width: 100%; padding: 12px 14px; border: 1.5px solid #e2e8f0;
+  border-radius: 10px; font-family: 'Tajawal', sans-serif; font-size: 14px;
+  color: #1a2340; resize: vertical; min-height: 90px;
+  transition: border-color 0.15s; outline: none;
+  background: #fafbff;
+}
+.form-textarea:focus { border-color: #3b82f6; background: white; }
+.form-textarea::placeholder { color: #b0b9cc; }
+
+/* Student notes section */
+.student-report-item {
+  border: 1.5px solid #f0f2f8; border-radius: 12px;
+  padding: 16px; margin-bottom: 12px;
+  transition: border-color 0.15s;
+}
+.student-report-item:hover { border-color: #bfdbfe; }
+.student-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.student-avatar {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 800; color: white; flex-shrink: 0;
+}
+.student-name { font-size: 14px; font-weight: 800; }
+.student-status { margin-right: auto; }
+.present-tag { background: #dcfce7; color: #15803d; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.absent-tag { background: #fee2e2; color: #dc2626; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+
+.student-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini-label { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 5px; display: block; }
+.mini-input {
+  width: 100%; padding: 8px 10px; border: 1.5px solid #e2e8f0;
+  border-radius: 8px; font-family: 'Tajawal', sans-serif; font-size: 13px;
+  color: #1a2340; outline: none; background: #fafbff;
+}
+.mini-input:focus { border-color: #3b82f6; background: white; }
+
+/* Score selector */
+.score-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.score-label { font-size: 12px; font-weight: 700; color: #64748b; width: 80px; }
+.score-btns { display: flex; gap: 5px; }
+.score-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid #e2e8f0;
+  background: white; cursor: pointer; font-size: 13px; font-weight: 700;
+  color: #8492a6; font-family: inherit; transition: all 0.1s;
+}
+.score-btn:hover { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+.score-btn.selected { background: #3b82f6; border-color: #3b82f6; color: white; }
+.score-btn.selected-4 { background: #10b981; border-color: #10b981; color: white; }
+.score-btn.selected-3 { background: #f59e0b; border-color: #f59e0b; color: white; }
+.score-btn.selected-2 { background: #f97316; border-color: #f97316; color: white; }
+.score-btn.selected-1 { background: #ef4444; border-color: #ef4444; color: white; }
+
+/* Right column */
+.summary-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); position: sticky; top: 20px; }
+.summary-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f2f8; font-size: 13px; }
+.summary-row:last-of-type { border-bottom: none; }
+.summary-key { color: #64748b; font-weight: 500; }
+.summary-val { font-weight: 800; color: #1a2340; }
+.summary-val.done { color: #10b981; }
+.summary-val.pending { color: #f59e0b; }
+
+.save-btn {
+  width: 100%; padding: 14px; border-radius: 12px; border: none;
+  background: linear-gradient(135deg, #1e3a5f, #2d5a9e);
+  color: white; font-family: 'Tajawal', sans-serif;
+  font-size: 15px; font-weight: 800; cursor: pointer;
+  margin-top: 16px; transition: all 0.15s;
+  box-shadow: 0 3px 10px rgba(30,58,95,0.3);
+}
+.save-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 16px rgba(30,58,95,0.4); }
+
+.draft-btn {
+  width: 100%; padding: 10px; border-radius: 10px;
+  border: 1.5px solid #e2e8f0; background: white;
+  color: #64748b; font-family: 'Tajawal', sans-serif;
+  font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 8px;
+}
+
+.hint { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #92400e; margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="page-header">
+  <div>
+    <div class="page-title">تقرير الحصة #10</div>
+    <div class="page-subtitle">الفوج الأول — الأستاذ Abdelmouez Mehri</div>
+  </div>
+  <button class="back-btn">← رجوع للفوج</button>
+</div>
+
+<!-- Session info bar -->
+<div class="session-info-bar">
+  <div class="info-chip">
+    <span class="info-chip-label">التاريخ</span>
+    <span class="info-chip-value">Apr 19, 2026</span>
+  </div>
+  <div class="info-divider"></div>
+  <div class="info-chip">
+    <span class="info-chip-label">عنوان الدرس</span>
+    <span class="info-chip-value">لتنل</span>
+  </div>
+  <div class="info-divider"></div>
+  <div class="info-chip">
+    <span class="info-chip-label">نوع الحصة</span>
+    <span class="info-chip-value">أكاديمية</span>
+  </div>
+  <div class="info-divider"></div>
+  <div class="info-chip">
+    <span class="info-chip-label">الحضور</span>
+    <span class="info-chip-value">✓ 1 حاضر &nbsp; ✗ 1 غائب</span>
+  </div>
+</div>
+
+<div class="grid">
+  <div>
+
+    <!-- ما تحقق -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">✅</span> ما تحقق في هذه الحصة</div>
+      <div class="form-field">
+        <textarea class="form-textarea" placeholder="اكتب ما تم إنجازه في هذه الحصة... مثال: تمكّن الطلاب من نطق كلمات جديدة وتمرّنوا على الحوار"></textarea>
+      </div>
+    </div>
+
+    <!-- ملاحظات الطلاب -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">👨‍🎓</span> ملاحظات لكل طالب</div>
+
+      <!-- Student 1 -->
+      <div class="student-report-item">
+        <div class="student-header">
+          <div class="student-avatar" style="background:linear-gradient(135deg,#3b82f6,#6366f1);">ط</div>
+          <div>
+            <div class="student-name">طارق</div>
+          </div>
+          <div class="student-status"><span class="present-tag">✓ حاضر</span></div>
+        </div>
+        <div class="student-fields">
+          <div>
+            <span class="mini-label">ملاحظة</span>
+            <input class="mini-input" placeholder="ملاحظة خاصة بالطالب..." />
+          </div>
+          <div>
+            <span class="mini-label">التقييم</span>
+            <div class="score-btns">
+              <button class="score-btn selected-1">1</button>
+              <button class="score-btn selected-2">2</button>
+              <button class="score-btn selected-3 selected">3</button>
+              <button class="score-btn selected-4">4</button>
+              <button class="score-btn">5</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Student 2 -->
+      <div class="student-report-item">
+        <div class="student-header">
+          <div class="student-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">ع</div>
+          <div>
+            <div class="student-name">علي</div>
+          </div>
+          <div class="student-status"><span class="absent-tag">✗ غائب</span></div>
+        </div>
+        <div style="background:#f8fafc;border-radius:8px;padding:10px;text-align:center;font-size:13px;color:#94a3b8;">
+          الطالب غائب — يمكن إضافة ملاحظة اختيارية
+        </div>
+        <div style="margin-top:10px;">
+          <input class="mini-input" placeholder="ملاحظة اختيارية للغائب..." style="width:100%;" />
+        </div>
+      </div>
+    </div>
+
+    <!-- الهدف القادم -->
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">🎯</span> هدف الحصة القادمة</div>
+      <div class="form-field">
+        <textarea class="form-textarea" placeholder="ما الذي ستركز عليه في الحصة القادمة؟"></textarea>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right summary -->
+  <div>
+    <div class="summary-card">
+      <div class="card-title" style="font-size:14px;margin-bottom:14px;"><span>📊</span> ملخص التقرير</div>
+
+      <div class="summary-row">
+        <span class="summary-key">ما تحقق</span>
+        <span class="summary-val pending">لم يُكتب بعد</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">ملاحظات الطلاب</span>
+        <span class="summary-val">1 / 2 مكتمل</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">التقييمات</span>
+        <span class="summary-val done">✓ مكتمل</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">الهدف القادم</span>
+        <span class="summary-val pending">لم يُكتب بعد</span>
+      </div>
+
+      <button class="save-btn">💾 حفظ التقرير</button>
+      <button class="draft-btn">حفظ كمسودة</button>
+
+      <div class="hint">💡 يمكن تعديل التقرير في أي وقت بعد الحفظ</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

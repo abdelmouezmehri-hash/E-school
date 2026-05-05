@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تصميم صفحة الفوج</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f1f5f9; color: #1e293b; direction: rtl; }
+
+  .page-wrapper { display: flex; gap: 20px; padding: 20px; max-width: 1300px; margin: 0 auto; }
+
+  /* Sidebar */
+  .sidebar { width: 220px; background: #1e3a5f; border-radius: 16px; padding: 20px 0; flex-shrink: 0; }
+  .sidebar-logo { color: #f59e0b; font-weight: bold; font-size: 16px; padding: 0 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 12px 20px; color: rgba(255,255,255,0.7); font-size: 13px; cursor: pointer; }
+  .sidebar-item.active { background: rgba(255,255,255,0.1); color: white; border-right: 3px solid #f59e0b; }
+  .sidebar-item:hover { background: rgba(255,255,255,0.07); }
+  .sidebar-icon { width: 18px; text-align: center; }
+  .sidebar-user { padding: 16px 20px; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #f59e0b; display:flex; align-items:center; justify-content:center; color:#1e3a5f; font-weight:bold; font-size:14px; }
+  .user-info { color: white; }
+  .user-info small { color: rgba(255,255,255,0.5); font-size:11px; display:block; }
+
+  /* Main content */
+  .main { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+  /* Header */
+  .page-header { background: white; border-radius: 16px; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .page-title { font-size: 22px; font-weight: 700; color: #1e3a5f; }
+  .page-meta { display: flex; gap: 8px; align-items: center; }
+  .badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  .badge-green { background: #dcfce7; color: #15803d; }
+  .btn { padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; display:flex; align-items:center; gap:6px; }
+  .btn-primary { background: #f59e0b; color: #1e3a5f; }
+  .btn-secondary { background: #f1f5f9; color: #475569; }
+  .btn-outline { background: white; color: #475569; border: 1px solid #e2e8f0; }
+
+  /* Content grid */
+  .content-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+
+  /* Sessions card */
+  .card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .card-title { font-size: 15px; font-weight: 700; color: #1e3a5f; display:flex; align-items:center; gap:8px; }
+  .count-badge { background: #1e3a5f; color: white; border-radius: 20px; padding: 2px 10px; font-size: 12px; }
+
+  /* Role filter pill */
+  .role-filter { display: flex; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: 10px; margin-bottom: 16px; }
+  .role-pill { padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; color: #64748b; }
+  .role-pill.active { background: white; color: #1e3a5f; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+  /* Sessions table */
+  .sessions-table { width: 100%; border-collapse: collapse; }
+  .sessions-table th { background: #f8fafc; padding: 10px 12px; font-size: 12px; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9; }
+  .sessions-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
+  .sessions-table tr:last-child td { border-bottom: none; }
+  .sessions-table tr:hover td { background: #fafbff; }
+
+  .session-num { color: #1d4ed8; font-weight: 700; font-size: 12px; }
+  .session-type { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+  .type-lang { background: #dbeafe; color: #1d4ed8; }
+  .type-dev { background: #fef3c7; color: #92400e; }
+  .attendance-dot { display:inline-flex; align-items:center; gap:3px; font-size:12px; color:#059669; }
+  .absent-dot { color: #dc2626; }
+
+  .action-btns { display: flex; gap: 6px; justify-content: center; }
+  .icon-btn { width: 30px; height: 30px; border-radius: 8px; border: none; cursor: pointer; display:flex; align-items:center; justify-content:center; font-size:14px; }
+  .icon-btn-edit { background: #f1f5f9; color: #475569; }
+  .icon-btn-report { background: #fef3c7; color: #92400e; font-size: 11px; font-weight: 700; padding: 0 8px; width: auto; border-radius: 8px; }
+  .icon-btn-report:hover { background: #f59e0b; color: white; }
+
+  /* Right sidebar cards */
+  .side-cards { display: flex; flex-direction: column; gap: 16px; }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+  .info-row:last-child { border-bottom: none; }
+  .info-label { color: #64748b; }
+  .info-value { font-weight: 600; color: #1e293b; }
+
+  .student-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+  .student-item:last-child { border-bottom: none; }
+  .student-avatar { width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:white; }
+  .s-blue { background: #3b82f6; }
+  .s-green { background: #10b981; }
+  .online-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: auto; }
+  .warn-dot { background: #f59e0b; }
+
+  .goal-box { background: #f8fafc; border-radius: 10px; padding: 14px; font-size: 13px; color: #475569; line-height: 1.6; border-right: 3px solid #f59e0b; }
+
+  /* Upcoming */
+  .upcoming-item { display:flex; align-items:center; gap:12px; padding:10px; background:#f8fafc; border-radius:10px; margin-bottom:8px; }
+  .date-box { background: #1e3a5f; color:white; border-radius:8px; padding: 6px 10px; text-align:center; min-width:44px; }
+  .date-box .day { font-size:16px; font-weight:700; line-height:1; }
+  .date-box .month { font-size:10px; color:rgba(255,255,255,0.7); }
+  .session-label { font-size: 12px; color:#64748b; }
+  .session-type-mini { font-size: 11px; background: #f1f5f9; color:#64748b; padding:2px 8px; border-radius:4px; }
+  .delete-btn { margin-right:auto; background:none; border:none; cursor:pointer; color:#cbd5e0; font-size:16px; }
+  .delete-btn:hover { color: #ef4444; }
+
+  .section-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+  .new-report-hint { background: #fef3c7; border: 1px dashed #f59e0b; border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #92400e; text-align: center; margin-top: 8px; }
+
+  .label-note { display:inline-flex; align-items:center; gap:4px; background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:6px; font-size:11px; font-weight:600; }
+
+  /* Top label banner */
+  .role-banner { display:flex; align-items:center; gap:8px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:8px 14px; font-size:13px; color:#1d4ed8; margin-bottom:4px; }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- Sidebar -->
+  <div class="sidebar" style="display:flex;flex-direction:column;">
+    <div class="sidebar-logo">• KidSpeak</div>
+    <div style="height:12px;"></div>
+    <div class="sidebar-item active"><span class="sidebar-icon">📚</span> مجموعاتي</div>
+    <div class="sidebar-item"><span class="sidebar-icon">📋</span> مستحقاتي</div>
+    <div class="sidebar-item"><span class="sidebar-icon">📊</span> التقييمات</div>
+    <div class="sidebar-item"><span class="sidebar-icon">👨‍🎓</span> تلاميذ</div>
+    <div class="sidebar-item"><span class="sidebar-icon">🖼️</span> معرض الصور</div>
+    <div class="sidebar-item"><span class="sidebar-icon">✉️</span> الرسائل</div>
+    <div class="sidebar-item"><span class="sidebar-icon">💡</span> صندوق الأفكار</div>
+    <div style="flex:1;"></div>
+    <div class="sidebar-user">
+      <div class="avatar">A</div>
+      <div class="user-info">Abdelmouez Mehri<small>Teacher</small></div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="btn btn-outline" style="padding:8px 12px;">← رجوع</button>
+        <div>
+          <div class="page-title">الفوج الأول</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">المستوى الأول</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="badge badge-blue">الانتباه</span>
+        <span class="badge badge-green" style="background:#dcfce7;">طالب 2 / 15</span>
+        <button class="btn btn-secondary">📅 جدولة حصة</button>
+        <button class="btn btn-primary">+ إضافة حصة</button>
+      </div>
+    </div>
+
+    <!-- Role Banner -->
+    <div class="role-banner">
+      👨‍🏫 أنت تشاهد <strong style="margin:0 4px;">حصصك فقط</strong> — حصص اللغة الإنجليزية المرتبطة بك
+    </div>
+
+    <!-- Content Grid -->
+    <div class="content-grid">
+
+      <!-- Sessions List -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            📋 سجل الجلسات
+            <span class="count-badge">11</span>
+          </div>
+          <div class="role-filter">
+            <div class="role-pill active">أكاديمية</div>
+            <div class="role-pill">نفسية</div>
+          </div>
+        </div>
+
+        <table class="sessions-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>التاريخ</th>
+              <th>عنوان الدرس</th>
+              <th>النمط</th>
+              <th>الحضور</th>
+              <th>التقرير</th>
+              <th>تعديل</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="session-num">#11</span></td>
+              <td style="color:#64748b;font-size:12px;">Apr 19, 2026</td>
+              <td style="font-weight:600;">لتنل</td>
+              <td><span class="session-type type-lang">أكاديمية</span></td>
+              <td><span class="attendance-dot">✓ 1</span> <span class="absent-dot">✗ 1</span></td>
+              <td>
+                <button class="icon-btn icon-btn-report" style="background:#dcfce7;color:#15803d;">✓ مكتمل</button>
+              </td>
+              <td><button class="icon-btn icon-btn-edit">✏️</button></td>
+            </tr>
+            <tr>
+              <td><span class="session-num">#10</span></td>
+              <td style="color:#64748b;font-size:12px;">Apr 19, 2026</td>
+              <td style="font-weight:600;">لتنل</td>
+              <td><span class="session-type type-lang">أكاديمية</span></td>
+              <td><span class="attendance-dot">✓ 1</span> <span class="absent-dot">✗ 1</span></td>
+              <td>
+                <button class="icon-btn icon-btn-report" style="background:#fef3c7;color:#92400e;">📝 تقرير</button>
+              </td>
+              <td><button class="icon-btn icon-btn-edit">✏️</button></td>
+            </tr>
+            <tr>
+              <td><span class="session-num">#09</span></td>
+              <td style="color:#64748b;font-size:12px;">Apr 19, 2026</td>
+              <td style="color:#94a3b8;">—</td>
+              <td><span class="session-type type-lang">أكاديمية</span></td>
+              <td><span class="attendance-dot">✓ 1</span></td>
+              <td>
+                <button class="icon-btn icon-btn-report" style="background:#fef3c7;color:#92400e;">📝 تقرير</button>
+              </td>
+              <td><button class="icon-btn icon-btn-edit">✏️</button></td>
+            </tr>
+            <tr>
+              <td><span class="session-num">#08</span></td>
+              <td style="color:#64748b;font-size:12px;">Apr 19, 2026</td>
+              <td style="font-weight:600;">لتلا</td>
+              <td><span class="session-type type-lang">أكاديمية</span></td>
+              <td><span class="attendance-dot">✓ 1</span></td>
+              <td>
+                <button class="icon-btn icon-btn-report" style="background:#fef3c7;color:#92400e;">📝 تقرير</button>
+              </td>
+              <td><button class="icon-btn icon-btn-edit">✏️</button></td>
+            </tr>
+            <tr>
+              <td><span class="session-num">#07</span></td>
+              <td style="color:#64748b;font-size:12px;">Apr 18, 2026</td>
+              <td style="font-weight:600;">Greeting</td>
+              <td><span class="session-type type-lang">أكاديمية</span></td>
+              <td><span class="attendance-dot">✓ 2</span></td>
+              <td>
+                <button class="icon-btn icon-btn-report" style="background:#fef3c7;color:#92400e;">📝 تقرير</button>
+              </td>
+              <td><button class="icon-btn icon-btn-edit">✏️</button></td>
+            </tr>
+            <tr>
+              <td><span class="session-num">#06</span></td>
+              <td style="color:#64748b;font-size:12px;">Apr 18, 2026</td>
+              <td style="font-weight:600;">الانتباه</td>
+              <td><span class="session-type type-lang">أكاديمية</span></td>
+              <td><span class="attendance-dot">✓ 1</span></td>
+              <td>
+                <button class="icon-btn icon-btn-report" style="background:#dcfce7;color:#15803d;">✓ مكتمل</button>
+              </td>
+              <td><button class="icon-btn icon-btn-edit">✏️</button></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="new-report-hint">
+          💡 الحصص التي لم يُملأ تقريرها تظهر بزر <strong>📝 تقرير</strong> باللون الأصفر
+        </div>
+      </div>
+
+      <!-- Right panel -->
+      <div class="side-cards">
+
+        <!-- Next session goal -->
+        <div class="card">
+          <div class="section-label">🎯 هدف الحصة القادمة</div>
+          <div class="goal-box">الإيابليل</div>
+          <button class="btn btn-outline" style="width:100%;margin-top:12px;justify-content:center;font-size:12px;">تعديل الجلسة</button>
+        </div>
+
+        <!-- Follow-up -->
+        <div class="card">
+          <div class="section-label">⚠️ يحتاج متابعة</div>
+          <div class="student-item">
+            <div class="student-avatar s-blue">ط</div>
+            <span style="font-size:13px;font-weight:600;">طارق</span>
+            <div class="online-dot warn-dot"></div>
+          </div>
+          <div class="student-item">
+            <div class="student-avatar s-green">ع</div>
+            <span style="font-size:13px;font-weight:600;">علي</span>
+            <div class="online-dot warn-dot"></div>
+          </div>
+        </div>
+
+        <!-- Students -->
+        <div class="card">
+          <div class="section-label">👨‍🎓 التلاميذ</div>
+          <div class="student-item">
+            <div class="student-avatar s-blue">ط</div>
+            <span style="font-size:13px;font-weight:600;">طارق</span>
+            <div class="online-dot"></div>
+          </div>
+          <div class="student-item">
+            <div class="student-avatar s-green">ع</div>
+            <span style="font-size:13px;font-weight:600;">علي</span>
+            <div class="online-dot"></div>
+          </div>
+          <button class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;font-size:12px;">+ إضافة تلميذ</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Upcoming Sessions -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📅 الحصص القادمة <span class="count-badge">5</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;">
+        <div class="upcoming-item">
+          <div class="date-box"><div class="day">7</div><div class="month">JUN</div></div>
+          <div><div style="font-size:12px;font-weight:600;">حصة #12</div><div class="session-label">أكاديمية</div></div>
+          <button class="delete-btn">🗑</button>
+        </div>
+        <div class="upcoming-item">
+          <div class="date-box"><div class="day">31</div><div class="month">MAY</div></div>
+          <div><div style="font-size:12px;font-weight:600;">حصة #11</div><div class="session-label">أكاديمية</div></div>
+          <button class="delete-btn">🗑</button>
+        </div>
+        <div class="upcoming-item">
+          <div class="date-box"><div class="day">24</div><div class="month">MAY</div></div>
+          <div><div style="font-size:12px;font-weight:600;">حصة #10</div><div class="session-label">أكاديمية</div></div>
+          <button class="delete-btn">🗑</button>
+        </div>
+        <div class="upcoming-item">
+          <div class="date-box"><div class="day">3</div><div class="month">MAY</div></div>
+          <div><div style="font-size:12px;font-weight:600;">حصة #9</div><div class="session-label">أكاديمية</div></div>
+          <button class="delete-btn">🗑</button>
+        </div>
+        <div class="upcoming-item">
+          <div class="date-box" style="background:#f59e0b;"><div class="day">19</div><div class="month">APR</div></div>
+          <div><div style="font-size:12px;font-weight:600;">حصة #8</div><span class="badge-green" style="background:#dcfce7;color:#15803d;font-size:10px;padding:2px 6px;border-radius:4px;">بلاري</span></div>
+          <button class="delete-btn">🗑</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e3a5f;color:white;padding:12px 24px;border-radius:12px;font-size:13px;direction:rtl;box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+  📌 هذا تصميم صفحة الفوج — الأستاذ يرى حصصه فقط مع زر تقرير لكل حصة
+  <span style="margin-right:12px;opacity:0.6;font-size:11px;">اضغط "موافق" أو أخبرني بتعديلاتك</span>
+</div>
+</body>
+</html>

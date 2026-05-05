@@ -1,0 +1,58 @@
+**TASK: investigate-only — do NOT modify anything yet**
+
+The receptionist role has two visible bugs in the UI:
+
+1. Their "مستحقاتي" / earnings page throws an error.
+2. The role label "receptionist" appears in English in the users list 
+   instead of Arabic, even though all other roles (admin, teacher, 
+   psychologist, etc.) are localized.
+
+Your job in this turn: investigate ONLY. Do not change any file. 
+Do not "fix" anything. Just report findings.
+
+Steps:
+
+1. Find the language/translation context. Search for:
+   - language-context.tsx
+   - i18n files
+   - any file that maps "teacher" / "psychologist" / "admin" to Arabic
+   Report the file path and show the role-label mapping object. 
+   Tell me whether "receptionist" is present, and if not, where 
+   it would need to be added (file path + line number).
+
+2. Find what page renders when a receptionist clicks "مستحقاتي".
+   Likely candidates:
+   - artifacts/kidspeak/src/pages/employee-dashboard/index.tsx
+   - artifacts/kidspeak/src/pages/groups/earnings.tsx
+   - artifacts/kidspeak/src/pages/psychologist/earnings.tsx
+   - artifacts/kidspeak/src/pages/my-profile/index.tsx
+   Find the routing logic that decides which page to render based 
+   on user.role. Report:
+   - the routing file (App.tsx, routes.tsx, or similar)
+   - the exact code branch for receptionist (if any)
+   - whether receptionist falls through to a default page
+
+3. Reproduce the error. Open the browser, log in as a receptionist 
+   account (or impersonate one), navigate to "مستحقاتي", and capture:
+   - the exact error message in the browser console (DevTools → Console)
+   - the network request that fails (DevTools → Network → look for 
+     red /api/... requests, share the URL and the response body)
+   - a screenshot of what the user sees
+
+4. Check the backend route that the failing request hits. Open 
+   artifacts/api-server/src/routes/earnings.ts (the file that was 
+   recently updated). Trace what would happen if user.role === 
+   "receptionist" and user.paymentType === null. Specifically check 
+   the sendStaffEarnings function and report what totalEarned and 
+   the response would look like.
+
+DO NOT:
+- Modify any file in this turn.
+- Add receptionist to any translation map.
+- "Fix" the routing.
+- Run pnpm typecheck or restart the server.
+- Touch the database.
+
+When done, report findings as a numbered list matching the 4 steps 
+above. I will read your findings and tell you exactly what to fix 
+in the next turn.

@@ -1,0 +1,1734 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Kidspeak Language Learning Management System API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User management
+  - name: levels
+    description: Course level management
+  - name: students
+    description: Student management
+  - name: evaluations
+    description: Student evaluations
+  - name: payments
+    description: Payment management
+  - name: expenses
+    description: Expense tracking
+  - name: dashboard
+    description: Dashboard summaries
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users
+      parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum: [admin, teacher, parent, psychologist, accountant]
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUserBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    put:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserBody"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /levels:
+    get:
+      operationId: listLevels
+      tags: [levels]
+      summary: List all levels
+      responses:
+        "200":
+          description: List of levels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Level"
+    post:
+      operationId: createLevel
+      tags: [levels]
+      summary: Create level
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLevelBody"
+      responses:
+        "201":
+          description: Level created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Level"
+
+  /levels/{id}:
+    get:
+      operationId: getLevel
+      tags: [levels]
+      summary: Get level by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Level
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Level"
+    put:
+      operationId: updateLevel
+      tags: [levels]
+      summary: Update level
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLevelBody"
+      responses:
+        "200":
+          description: Level updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Level"
+    delete:
+      operationId: deleteLevel
+      tags: [levels]
+      summary: Delete level
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /students:
+    get:
+      operationId: listStudents
+      tags: [students]
+      summary: List all students
+      parameters:
+        - in: query
+          name: levelId
+          schema:
+            type: integer
+        - in: query
+          name: parentId
+          schema:
+            type: integer
+        - in: query
+          name: search
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudentWithDetails"
+    post:
+      operationId: createStudent
+      tags: [students]
+      summary: Create student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStudentBody"
+      responses:
+        "201":
+          description: Student created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+
+  /students/{id}:
+    get:
+      operationId: getStudent
+      tags: [students]
+      summary: Get student by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Student profile with evaluations and payments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentProfile"
+    put:
+      operationId: updateStudent
+      tags: [students]
+      summary: Update student
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStudentBody"
+      responses:
+        "200":
+          description: Student updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+    delete:
+      operationId: deleteStudent
+      tags: [students]
+      summary: Delete student
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /students/{id}/progress:
+    get:
+      operationId: getStudentProgress
+      tags: [students]
+      summary: Get student progress trend data
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Progress trend data for charts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProgressData"
+
+  /evaluations:
+    get:
+      operationId: listEvaluations
+      tags: [evaluations]
+      summary: List evaluations
+      parameters:
+        - in: query
+          name: studentId
+          schema:
+            type: integer
+        - in: query
+          name: weekNumber
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of evaluations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Evaluation"
+    post:
+      operationId: createEvaluation
+      tags: [evaluations]
+      summary: Create evaluation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEvaluationBody"
+      responses:
+        "201":
+          description: Evaluation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+
+  /evaluations/{id}:
+    put:
+      operationId: updateEvaluation
+      tags: [evaluations]
+      summary: Update evaluation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEvaluationBody"
+      responses:
+        "200":
+          description: Evaluation updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+    delete:
+      operationId: deleteEvaluation
+      tags: [evaluations]
+      summary: Delete evaluation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List payments
+      parameters:
+        - in: query
+          name: studentId
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [paid, partially_paid, overdue, pending]
+        - in: query
+          name: levelId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PaymentWithDetails"
+    post:
+      operationId: createPayment
+      tags: [payments]
+      summary: Create payment record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentBody"
+      responses:
+        "201":
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/{id}:
+    get:
+      operationId: getPayment
+      tags: [payments]
+      summary: Get payment by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentWithDetails"
+    put:
+      operationId: updatePayment
+      tags: [payments]
+      summary: Update payment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePaymentBody"
+      responses:
+        "200":
+          description: Payment updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/{id}/receipt:
+    get:
+      operationId: getReceipt
+      tags: [payments]
+      summary: Get payment receipt data
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Receipt data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Receipt"
+
+  /expenses:
+    get:
+      operationId: listExpenses
+      tags: [expenses]
+      summary: List expenses
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: string
+            description: "YYYY-MM format"
+        - in: query
+          name: category
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Expense"
+    post:
+      operationId: createExpense
+      tags: [expenses]
+      summary: Create expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseBody"
+      responses:
+        "201":
+          description: Expense created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+
+  /expenses/{id}:
+    put:
+      operationId: updateExpense
+      tags: [expenses]
+      summary: Update expense
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateExpenseBody"
+      responses:
+        "200":
+          description: Expense updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+    delete:
+      operationId: deleteExpense
+      tags: [expenses]
+      summary: Delete expense
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /observations:
+    get:
+      operationId: listObservations
+      tags: [students]
+      summary: List psychological observations
+      parameters:
+        - in: query
+          name: studentId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of observations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Observation"
+    post:
+      operationId: createObservation
+      tags: [students]
+      summary: Create psychological observation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateObservationBody"
+      responses:
+        "201":
+          description: Observation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Observation"
+
+  /observations/{id}:
+    delete:
+      operationId: deleteObservation
+      tags: [students]
+      summary: Delete observation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /dashboard/behavioral:
+    get:
+      operationId: getBehavioralDashboard
+      tags: [dashboard]
+      summary: Behavioral monitoring dashboard for psychologists
+      responses:
+        "200":
+          description: Behavioral data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BehavioralSummary"
+
+  /dashboard/admin:
+    get:
+      operationId: getAdminDashboard
+      tags: [dashboard]
+      summary: Admin dashboard summary
+      responses:
+        "200":
+          description: Admin dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+  /dashboard/revenue:
+    get:
+      operationId: getRevenueDashboard
+      tags: [dashboard]
+      summary: Revenue dashboard
+      parameters:
+        - in: query
+          name: month
+          schema:
+            type: string
+            description: "YYYY-MM format"
+      responses:
+        "200":
+          description: Revenue data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueDashboard"
+
+  /dashboard/performance:
+    get:
+      operationId: getPerformanceDashboard
+      tags: [dashboard]
+      summary: School performance overview
+      responses:
+        "200":
+          description: Performance data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceDashboard"
+
+  /dashboard/pending-payments:
+    get:
+      operationId: getPendingPayments
+      tags: [dashboard]
+      summary: List of pending/overdue payments
+      responses:
+        "200":
+          description: Pending payments summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PendingPaymentSummary"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    LoginResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+      required:
+        - user
+        - message
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, teacher, parent, psychologist, accountant]
+        phone:
+          type: string
+          nullable: true
+        profilePicture:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - status
+        - createdAt
+
+    CreateUserBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        role:
+          type: string
+          enum: [admin, teacher, parent, psychologist, accountant]
+        phone:
+          type: string
+          nullable: true
+        profilePicture:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+        studentIds:
+          type: array
+          items:
+            type: integer
+          description: "For parent role: student IDs to link"
+      required:
+        - name
+        - email
+        - password
+        - role
+
+    UpdateUserBody:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, teacher, parent, psychologist, accountant]
+        password:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        profilePicture:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+        studentIds:
+          type: array
+          items:
+            type: integer
+          description: "For parent role: student IDs to link"
+
+    Observation:
+      type: object
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        authorId:
+          type: integer
+        authorName:
+          type: string
+        content:
+          type: string
+        observationType:
+          type: string
+          enum: [fear, shyness, participation, general]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - studentId
+        - authorId
+        - authorName
+        - content
+        - observationType
+        - createdAt
+
+    CreateObservationBody:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        content:
+          type: string
+        observationType:
+          type: string
+          enum: [fear, shyness, participation, general]
+      required:
+        - studentId
+        - content
+        - observationType
+
+    BehavioralSummary:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        levelName:
+          type: string
+          nullable: true
+        behavioralFlags:
+          type: array
+          items:
+            type: string
+        observations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Observation"
+        latestProgressScore:
+          type: number
+          nullable: true
+      required:
+        - studentId
+        - studentName
+        - behavioralFlags
+        - observations
+
+    Level:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        durationWeeks:
+          type: integer
+        sessionsPerWeek:
+          type: integer
+        price:
+          type: number
+        studentCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - durationWeeks
+        - sessionsPerWeek
+        - price
+        - studentCount
+        - createdAt
+
+    CreateLevelBody:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        durationWeeks:
+          type: integer
+        sessionsPerWeek:
+          type: integer
+        price:
+          type: number
+      required:
+        - name
+        - durationWeeks
+        - sessionsPerWeek
+        - price
+
+    Student:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+        levelId:
+          type: integer
+          nullable: true
+        parentId:
+          type: integer
+          nullable: true
+        teacherId:
+          type: integer
+          nullable: true
+        enrollmentDate:
+          type: string
+          format: date
+        behavioralFlags:
+          type: array
+          items:
+            type: string
+            enum: [fear, shyness, high_potential]
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - enrollmentDate
+        - behavioralFlags
+        - createdAt
+
+    StudentWithDetails:
+      allOf:
+        - $ref: "#/components/schemas/Student"
+        - type: object
+          properties:
+            levelName:
+              type: string
+              nullable: true
+            parentName:
+              type: string
+              nullable: true
+            teacherName:
+              type: string
+              nullable: true
+            paymentStatus:
+              type: string
+              enum: [paid, partially_paid, overdue, pending]
+              nullable: true
+            latestProgressScore:
+              type: number
+              nullable: true
+
+    StudentProfile:
+      allOf:
+        - $ref: "#/components/schemas/StudentWithDetails"
+        - type: object
+          properties:
+            evaluations:
+              type: array
+              items:
+                $ref: "#/components/schemas/Evaluation"
+            payments:
+              type: array
+              items:
+                $ref: "#/components/schemas/Payment"
+            progressScore:
+              type: number
+              nullable: true
+          required:
+            - evaluations
+            - payments
+
+    CreateStudentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+        levelId:
+          type: integer
+          nullable: true
+        parentId:
+          type: integer
+          nullable: true
+        teacherId:
+          type: integer
+          nullable: true
+        enrollmentDate:
+          type: string
+          format: date
+        behavioralFlags:
+          type: array
+          items:
+            type: string
+            enum: [fear, shyness, high_potential]
+        notes:
+          type: string
+          nullable: true
+      required:
+        - name
+        - enrollmentDate
+        - behavioralFlags
+
+    UpdateStudentBody:
+      type: object
+      properties:
+        name:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+        levelId:
+          type: integer
+          nullable: true
+        parentId:
+          type: integer
+          nullable: true
+        teacherId:
+          type: integer
+          nullable: true
+        enrollmentDate:
+          type: string
+          format: date
+        behavioralFlags:
+          type: array
+          items:
+            type: string
+            enum: [fear, shyness, high_potential]
+        notes:
+          type: string
+          nullable: true
+
+    Evaluation:
+      type: object
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        weekNumber:
+          type: integer
+        sessionDate:
+          type: string
+          format: date
+        speakingScore:
+          type: integer
+          minimum: 1
+          maximum: 10
+        confidenceScore:
+          type: integer
+          minimum: 1
+          maximum: 10
+        participationScore:
+          type: integer
+          minimum: 1
+          maximum: 10
+        progressScore:
+          type: number
+        teacherNotes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - studentId
+        - weekNumber
+        - sessionDate
+        - speakingScore
+        - confidenceScore
+        - participationScore
+        - progressScore
+        - createdAt
+
+    CreateEvaluationBody:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        weekNumber:
+          type: integer
+        sessionDate:
+          type: string
+          format: date
+        speakingScore:
+          type: integer
+          minimum: 1
+          maximum: 10
+        confidenceScore:
+          type: integer
+          minimum: 1
+          maximum: 10
+        participationScore:
+          type: integer
+          minimum: 1
+          maximum: 10
+        teacherNotes:
+          type: string
+          nullable: true
+      required:
+        - studentId
+        - weekNumber
+        - sessionDate
+        - speakingScore
+        - confidenceScore
+        - participationScore
+
+    ProgressData:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        weeklyData:
+          type: array
+          items:
+            type: object
+            properties:
+              weekNumber:
+                type: integer
+              sessionDate:
+                type: string
+              speakingScore:
+                type: number
+              confidenceScore:
+                type: number
+              participationScore:
+                type: number
+              progressScore:
+                type: number
+            required:
+              - weekNumber
+              - sessionDate
+              - speakingScore
+              - confidenceScore
+              - participationScore
+              - progressScore
+        overallProgressScore:
+          type: number
+          nullable: true
+      required:
+        - studentId
+        - studentName
+        - weeklyData
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+        studentId:
+          type: integer
+        levelId:
+          type: integer
+          nullable: true
+        amountDue:
+          type: number
+        amountPaid:
+          type: number
+        status:
+          type: string
+          enum: [paid, partially_paid, overdue, pending]
+        dueDate:
+          type: string
+          format: date
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - studentId
+        - amountDue
+        - amountPaid
+        - status
+        - dueDate
+        - createdAt
+
+    PaymentWithDetails:
+      allOf:
+        - $ref: "#/components/schemas/Payment"
+        - type: object
+          properties:
+            studentName:
+              type: string
+            levelName:
+              type: string
+              nullable: true
+            parentName:
+              type: string
+              nullable: true
+
+    CreatePaymentBody:
+      type: object
+      properties:
+        studentId:
+          type: integer
+        levelId:
+          type: integer
+          nullable: true
+        amountDue:
+          type: number
+        amountPaid:
+          type: number
+        status:
+          type: string
+          enum: [paid, partially_paid, overdue, pending]
+        dueDate:
+          type: string
+          format: date
+        notes:
+          type: string
+          nullable: true
+      required:
+        - studentId
+        - amountDue
+        - amountPaid
+        - status
+        - dueDate
+
+    UpdatePaymentBody:
+      type: object
+      properties:
+        amountPaid:
+          type: number
+        status:
+          type: string
+          enum: [paid, partially_paid, overdue, pending]
+        notes:
+          type: string
+          nullable: true
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    Receipt:
+      type: object
+      properties:
+        receiptNumber:
+          type: string
+        studentName:
+          type: string
+        levelName:
+          type: string
+          nullable: true
+        amountDue:
+          type: number
+        amountPaid:
+          type: number
+        balance:
+          type: number
+        status:
+          type: string
+        dueDate:
+          type: string
+        paidAt:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        issuedAt:
+          type: string
+      required:
+        - receiptNumber
+        - studentName
+        - amountDue
+        - amountPaid
+        - balance
+        - status
+        - dueDate
+        - issuedAt
+
+    Expense:
+      type: object
+      properties:
+        id:
+          type: integer
+        category:
+          type: string
+          enum: [rent, utilities, salaries, materials, maintenance, other]
+        description:
+          type: string
+        amount:
+          type: number
+        expenseDate:
+          type: string
+          format: date
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - category
+        - description
+        - amount
+        - expenseDate
+        - createdAt
+
+    CreateExpenseBody:
+      type: object
+      properties:
+        category:
+          type: string
+          enum: [rent, utilities, salaries, materials, maintenance, other]
+        description:
+          type: string
+        amount:
+          type: number
+        expenseDate:
+          type: string
+          format: date
+        notes:
+          type: string
+          nullable: true
+      required:
+        - category
+        - description
+        - amount
+        - expenseDate
+
+    AdminDashboard:
+      type: object
+      properties:
+        totalStudents:
+          type: integer
+        totalRevenue:
+          type: number
+        pendingRevenue:
+          type: number
+        totalLevels:
+          type: integer
+        totalTeachers:
+          type: integer
+        totalParents:
+          type: integer
+        averageProgressScore:
+          type: number
+          nullable: true
+        recentEvaluationsCount:
+          type: integer
+        overduePaymentsCount:
+          type: integer
+        studentsByLevel:
+          type: array
+          items:
+            type: object
+            properties:
+              levelId:
+                type: integer
+              levelName:
+                type: string
+              count:
+                type: integer
+            required:
+              - levelId
+              - levelName
+              - count
+        revenueByMonth:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+              revenue:
+                type: number
+            required:
+              - month
+              - revenue
+      required:
+        - totalStudents
+        - totalRevenue
+        - pendingRevenue
+        - totalLevels
+        - totalTeachers
+        - totalParents
+        - recentEvaluationsCount
+        - overduePaymentsCount
+        - studentsByLevel
+        - revenueByMonth
+
+    RevenueDashboard:
+      type: object
+      properties:
+        month:
+          type: string
+        totalCollected:
+          type: number
+        totalDue:
+          type: number
+        totalExpenses:
+          type: number
+        netRevenue:
+          type: number
+        revenueByLevel:
+          type: array
+          items:
+            type: object
+            properties:
+              levelId:
+                type: integer
+              levelName:
+                type: string
+              collected:
+                type: number
+              due:
+                type: number
+            required:
+              - levelId
+              - levelName
+              - collected
+              - due
+        paymentStatusBreakdown:
+          type: object
+          properties:
+            paid:
+              type: integer
+            partially_paid:
+              type: integer
+            overdue:
+              type: integer
+            pending:
+              type: integer
+          required:
+            - paid
+            - partially_paid
+            - overdue
+            - pending
+      required:
+        - month
+        - totalCollected
+        - totalDue
+        - totalExpenses
+        - netRevenue
+        - revenueByLevel
+        - paymentStatusBreakdown
+
+    PerformanceDashboard:
+      type: object
+      properties:
+        overallAverageScore:
+          type: number
+          nullable: true
+        topPerformers:
+          type: array
+          items:
+            type: object
+            properties:
+              studentId:
+                type: integer
+              studentName:
+                type: string
+              progressScore:
+                type: number
+              levelName:
+                type: string
+                nullable: true
+            required:
+              - studentId
+              - studentName
+              - progressScore
+        behavioralFlagCounts:
+          type: object
+          properties:
+            fear:
+              type: integer
+            shyness:
+              type: integer
+            high_potential:
+              type: integer
+          required:
+            - fear
+            - shyness
+            - high_potential
+        scoreBreakdown:
+          type: object
+          properties:
+            averageSpeaking:
+              type: number
+              nullable: true
+            averageConfidence:
+              type: number
+              nullable: true
+            averageParticipation:
+              type: number
+              nullable: true
+          required:
+            - averageSpeaking
+            - averageConfidence
+            - averageParticipation
+      required:
+        - topPerformers
+        - behavioralFlagCounts
+        - scoreBreakdown
+
+    PendingPaymentSummary:
+      type: object
+      properties:
+        paymentId:
+          type: integer
+        studentId:
+          type: integer
+        studentName:
+          type: string
+        levelName:
+          type: string
+          nullable: true
+        amountDue:
+          type: number
+        amountPaid:
+          type: number
+        balance:
+          type: number
+        status:
+          type: string
+          enum: [paid, partially_paid, overdue, pending]
+        dueDate:
+          type: string
+        daysOverdue:
+          type: integer
+          nullable: true
+      required:
+        - paymentId
+        - studentId
+        - studentName
+        - amountDue
+        - amountPaid
+        - balance
+        - status
+        - dueDate

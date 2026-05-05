@@ -1,0 +1,39 @@
+Redesign the landing page to use a light/white background instead of dark navy.
+
+File: artifacts/kidspeak/src/pages/landing/index.tsx
+
+Change ONLY the color palette constants at the top of the file:
+
+1. NAVY = "#0A1628"     → change to "#111827"  (keep as text color)
+2. NAVY_DEEP = "#070F1D" → change to "#F9FAFB" (light background)
+3. Add new constant: const WHITE = "#FFFFFF";
+4. TEAL = "#5EC4A0"    → change to "#0D9488"
+
+Then make these structural changes throughout the file:
+
+A. Main wrapper div: change background from NAVY to WHITE (#FFFFFF)
+B. Header: change background from "rgba(7,15,29,0.85)" to "rgba(255,255,255,0.95)" and add "box-shadow: 0 1px 3px rgba(0,0,0,0.1)"
+C. Header nav buttons: change color from "rgba(255,255,255,0.7)" to "#4B5563"
+D. Header "دخول" button: change color to "#374151" and border to "rgba(0,0,0,0.15)"
+E. Hero section: change background to WHITE, remove glow accents, change subtitle color from "rgba(255,255,255,0.65)" to "#6B7280"
+F. All section backgrounds using "rgba(255,255,255,0.02)" or "rgba(255,255,255,0.03)" → change to "#F9FAFB"
+G. All card backgrounds using "rgba(255,255,255,0.03)" or "rgba(255,255,255,0.04)" → change to "#FFFFFF" with border "1px solid #E5E7EB"
+H. All text using "rgba(255,255,255,0.7)" → change to "#374151"
+I. All text using "rgba(255,255,255,0.55)" or "rgba(255,255,255,0.5)" → change to "#6B7280"
+J. All text using "rgba(255,255,255,0.35)" or "rgba(255,255,255,0.4)" → change to "#9CA3AF"
+K. All borders using "rgba(255,255,255,0.08)" or "rgba(255,255,255,0.06)" → change to "#E5E7EB"
+L. Section labels (badge pill backgrounds like "rgba(94,196,160,0.1A)") → keep same but they will look better on white
+M. CTA banner: change background from dark gradient to a light teal/green gradient: "linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%)" with border "1px solid #86EFAC"
+N. Register form background: change to "#F9FAFB" with border "1px solid #E5E7EB"
+O. Footer background (NAVY_DEEP): change to "#111827" (dark footer on light page — keeps contrast)
+P. Footer text: keep white (it's on dark footer background)
+Q. Stats section: keep card backgrounds as "#FFFFFF" with subtle shadow "0 1px 3px rgba(0,0,0,0.08)"
+R. Testimonial cards: change to "#FFFFFF" with border "1px solid #E5E7EB"
+S. The hero h1 headline: change color to "#111827"
+T. Method section box: change background from "rgba(94,196,160,0.06)" to "#F0FDF4" with border "1px solid #86EFAC"
+
+After all changes:
+1. Run: pnpm typecheck — must show 0 errors
+2. Take a screenshot of the full landing page and show it
+3. Do NOT modify layout.tsx or any other file
+4. Do NOT change button colors (keep ORANGE #F5A623 as primary CTA)
