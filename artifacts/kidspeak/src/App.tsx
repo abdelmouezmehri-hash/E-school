@@ -498,13 +498,31 @@ function Router() {
         </Layout>
       </Route>
       <Route path="/admin/landing-settings">
-        <AdminLandingSettings />
+        <Layout>
+          <ProtectedRoute
+            component={AdminLandingSettings}
+            allowedRoles={["admin"]}
+            requiredPermission="landing_settings"
+          />
+        </Layout>
       </Route>
       <Route path="/admin/ai-settings">
-        <AdminAiSettings />
+        <Layout>
+          <ProtectedRoute
+            component={AdminAiSettings}
+            allowedRoles={["admin"]}
+            requiredPermission="ai_settings"
+          />
+        </Layout>
       </Route>
       <Route path="/admin/ai-builder">
-        <AdminAiBuilder />
+        <Layout>
+          <ProtectedRoute
+            component={AdminAiBuilder}
+            allowedRoles={["admin"]}
+            requiredPermission="ai_builder"
+          />
+        </Layout>
       </Route>
       <Route path="/admin/marketing-hub">
         <Layout>

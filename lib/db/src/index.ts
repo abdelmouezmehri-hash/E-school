@@ -5,7 +5,9 @@ import * as schema from "./schema";
 
 const url = process.env.DATABASE_URL;
 if (!url) {
-  throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
 }
 
 const provider = process.env.DATABASE_PROVIDER ?? "sqlite";
@@ -34,7 +36,9 @@ if (provider === "postgresql") {
   // Both drivers share the same Drizzle query builder API.
   // The cast is intentional: we represent both as LibSQLDatabase
   // to give the rest of the codebase a single stable type.
-  db = drizzle(new Pool({ connectionString: url }), { schema }) as unknown as LibSQLDatabase<typeof schema>;
+  db = drizzle(new Pool({ connectionString: url }), {
+    schema,
+  }) as unknown as LibSQLDatabase<typeof schema>;
 } else {
   const [{ drizzle }, { createClient }] = await Promise.all([
     import("drizzle-orm/libsql"),
@@ -47,3 +51,5 @@ export { db };
 export * from "./schema";
 export * from "./helpers";
 export * from "./helpers/branchScope";
+
+export * from "./progress";

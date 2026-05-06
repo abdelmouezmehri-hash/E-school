@@ -253,7 +253,12 @@ export default function RequestsPage() {
         resetForm();
         refetch();
       })
-      .catch(() => toast({ title: rt.createdError, variant: "destructive" }));
+      .catch(() =>
+        toast({
+          title: "Failed to create activity request.",
+          variant: "destructive",
+        }),
+      );
   };
 
   const handleConsent = (
@@ -261,7 +266,7 @@ export default function RequestsPage() {
     status: "approved" | "declined",
   ) => {
     submitConsent(
-      { id: requestId, data: { status } },
+      { requestId, status },
       {
         onSuccess: () => {
           toast({ title: status === "approved" ? rt.approved : rt.declined });
@@ -499,12 +504,12 @@ export default function RequestsPage() {
                         {req.myConsentStatus === "approved" ? (
                           <>
                             <CheckCircle className="w-3 h-3 me-1" />
-                            {rt.youApproved}
+                            {rt.myConsentApproved}
                           </>
                         ) : (
                           <>
                             <XCircle className="w-3 h-3 me-1" />
-                            {rt.youDeclined}
+                            {rt.myConsentDeclined}
                           </>
                         )}
                       </Badge>
@@ -751,14 +756,14 @@ export default function RequestsPage() {
 
           <DialogFooter className="flex items-center gap-2">
             <DialogClose asChild>
-              <Button variant="outline">{rt.cancel}</Button>
+              <Button variant="outline">{"Cancel"}</Button>
             </DialogClose>
             <Button
               style={{ backgroundColor: "#F5A600", color: "#1B2E8F" }}
               onClick={handleCreate}
               disabled={isCreating}
             >
-              {isCreating ? rt.creating : rt.create}
+              {isCreating ? rt.creating : rt.submit}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -791,7 +796,7 @@ function ConsentDialog({
   onClose: () => void;
   rt: any;
 }) {
-  const { data: consents = [] } = useRequestConsents({ id: requestId });
+  const { data: consents = [] } = useRequestConsents(requestId);
 
   return (
     <Dialog open onOpenChange={onClose}>

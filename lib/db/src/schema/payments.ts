@@ -1,4 +1,13 @@
-import { table, text, integer, real, id, timestamp, jsonText } from "./helpers";
+import {
+  table,
+  text,
+  integer,
+  real,
+  id,
+  timestamp,
+  jsonText,
+  index,
+} from "./helpers";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { studentsTable } from "./students";
@@ -6,28 +15,35 @@ import { usersTable } from "./users";
 import { levelsTable } from "./levels";
 import { branchesTable } from "./branches";
 
-export const paymentsTable = table("payments", {
-  id: id(),
-  studentId: integer("student_id")
-    .notNull()
-    .references(() => studentsTable.id, { onDelete: "cascade" }),
-  levelId: integer("level_id").references(() => levelsTable.id),
-  branchId: integer("branch_id").references(() => branchesTable.id, {
-    onDelete: "set null",
-  }),
-  amountDue: real("amount_due").notNull(),
-  discount: real("discount").notNull().default(0),
-  amountPaid: real("amount_paid").notNull().default(0),
-  status: text("status", {
-    enum: ["paid", "partially_paid", "overdue", "pending"],
-  })
-    .notNull()
-    .default("pending"),
-  dueDate: text("due_date").notNull(),
-  paidAt: timestamp("paid_at"),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const paymentsTable = table(
+  "payments",
+  {
+    id: id(),
+    studentId: integer("student_id")
+      .notNull()
+      .references(() => studentsTable.id, { onDelete: "cascade" }),
+    levelId: integer("level_id").references(() => levelsTable.id),
+    branchId: integer("branch_id").references(() => branchesTable.id, {
+      onDelete: "set null",
+    }),
+    amountDue: real("amount_due").notNull(),
+    discount: real("discount").notNull().default(0),
+    amountPaid: real("amount_paid").notNull().default(0),
+    status: text("status", {
+      enum: ["paid", "partially_paid", "overdue", "pending"],
+    })
+      .notNull()
+      .default("pending"),
+    dueDate: text("due_date").notNull(),
+    paidAt: timestamp("paid_at"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("payments_student_id_idx").on(t.studentId),
+    index("payments_status_due_date_idx").on(t.status, t.dueDate),
+  ],
+);
 
 export const insertPaymentSchema = createInsertSchema(paymentsTable).omit({
   id: true,

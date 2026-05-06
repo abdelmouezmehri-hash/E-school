@@ -119,7 +119,8 @@ async function resolveTargetLabel(
 router.get("/requests/audience-options", requireAuth, async (req, res) => {
   const user = (req as any).user;
   if (!["admin", "teacher"].includes(user.role))
-    return res.status(403).json({ error: "Forbidden" });
+    res.status(403).json({ error: "Forbidden" });
+  return;
 
   try {
     if (user.role === "admin") {
@@ -248,10 +249,12 @@ router.get("/requests", requireAuth, async (req, res) => {
 router.get("/requests/:id/consents", requireAuth, async (req, res) => {
   const user = (req as any).user;
   if (!["admin", "teacher"].includes(user.role))
-    return res.status(403).json({ error: "Forbidden" });
+    res.status(403).json({ error: "Forbidden" });
+  return;
 
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+  const id = parseInt(req.params.id as string);
+  if (isNaN(id)) res.status(400).json({ error: "Invalid id" });
+  return;
 
   // Teachers can only view consents for requests they authored
   if (user.role === "teacher") {
@@ -260,9 +263,10 @@ router.get("/requests/:id/consents", requireAuth, async (req, res) => {
       .from(activityRequestsTable)
       .where(eq(activityRequestsTable.id, id));
     if (!request || request.authorId !== user.id) {
-      return res.status(403).json({
+      res.status(403).json({
         error: "You can only view consents for your own activity requests",
       });
+      return;
     }
   }
 
@@ -290,7 +294,8 @@ router.get("/requests/:id/consents", requireAuth, async (req, res) => {
 router.post("/requests", requireAuth, async (req, res) => {
   const user = (req as any).user;
   if (!["admin", "teacher"].includes(user.role))
-    return res.status(403).json({ error: "Forbidden" });
+    res.status(403).json({ error: "Forbidden" });
+  return;
 
   const {
     title,
@@ -305,9 +310,8 @@ router.post("/requests", requireAuth, async (req, res) => {
     targetId,
   } = req.body;
   if (!title || !description || !date)
-    return res
-      .status(400)
-      .json({ error: "title, description, date are required" });
+    res.status(400).json({ error: "title, description, date are required" });
+  return;
 
   const validTargetTypes = ["all", "level", "group", "teacher"];
   const resolvedTargetType = validTargetTypes.includes(targetType)
@@ -323,25 +327,26 @@ router.post("/requests", requireAuth, async (req, res) => {
   //  - "level" is allowed (a teacher may run an activity for a whole level)
   if (user.role === "teacher") {
     if (resolvedTargetType === "all") {
-      return res.status(403).json({
+      res.status(403).json({
         error:
           "Teachers cannot create school-wide requests. Pick a level, group, or yourself as the audience.",
       });
+      return;
     }
     if (resolvedTargetType === "teacher" && resolvedTargetId !== user.id) {
-      return res
-        .status(403)
-        .json({ error: "Teachers can only target themselves." });
+      res.status(403).json({ error: "Teachers can only target themselves." });
+      return;
     }
     if (resolvedTargetType === "group" && resolvedTargetId !== null) {
       const [group] = await db
         .select({ teacherId: groupsTable.teacherId })
         .from(groupsTable)
-        .where(eq(groupsTable.id, resolvedTargetId));
+        .where(eq(groupsTable.id, resolvedTargetId!));
       if (!group || group.teacherId !== user.id) {
-        return res.status(403).json({
+        res.status(403).json({
           error: "You can only create requests for groups you teach.",
         });
+        return;
       }
     }
   }
@@ -381,10 +386,12 @@ router.post("/requests", requireAuth, async (req, res) => {
 router.delete("/requests/:id", requireAuth, async (req, res) => {
   const user = (req as any).user;
   if (!["admin", "teacher"].includes(user.role))
-    return res.status(403).json({ error: "Forbidden" });
+    res.status(403).json({ error: "Forbidden" });
+  return;
 
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+  const id = parseInt(req.params.id as string);
+  if (isNaN(id)) res.status(400).json({ error: "Invalid id" });
+  return;
 
   // Teachers can only delete requests they authored
   if (user.role === "teacher") {
@@ -393,9 +400,10 @@ router.delete("/requests/:id", requireAuth, async (req, res) => {
       .from(activityRequestsTable)
       .where(eq(activityRequestsTable.id, id));
     if (!request || request.authorId !== user.id) {
-      return res
+      res
         .status(403)
         .json({ error: "You can only delete your own activity requests" });
+      return;
     }
   }
 
@@ -414,16 +422,17 @@ router.delete("/requests/:id", requireAuth, async (req, res) => {
 router.post("/requests/:id/consent", requireAuth, async (req, res) => {
   const user = (req as any).user;
   if (user.role !== "parent")
-    return res.status(403).json({ error: "Only parents can submit consent" });
+    res.status(403).json({ error: "Only parents can submit consent" });
+  return;
 
-  const requestId = parseInt(req.params.id);
-  if (isNaN(requestId)) return res.status(400).json({ error: "Invalid id" });
+  const requestId = parseInt(req.params.id as string);
+  if (isNaN(requestId)) res.status(400).json({ error: "Invalid id" });
+  return;
 
   const { status } = req.body;
   if (!["approved", "declined"].includes(status))
-    return res
-      .status(400)
-      .json({ error: "status must be 'approved' or 'declined'" });
+    res.status(400).json({ error: "status must be 'approved' or 'declined'" });
+  return;
 
   try {
     await db
