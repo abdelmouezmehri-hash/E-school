@@ -152,13 +152,14 @@ function Router() {
       </Route>
       <Route path="/students">
         <Layout>
-          <ProtectedRoute component={Students} requiredPermission="students" />
+          <ProtectedRoute component={Students} allowedRoles={["admin", "teacher", "parent", "psychologist", "branch_manager", "receptionist"]} requiredPermission="students" />
         </Layout>
       </Route>
       <Route path="/students/:id">
         <Layout>
           <ProtectedRoute
             component={StudentProfile}
+            allowedRoles={["admin", "teacher", "parent", "psychologist", "branch_manager", "receptionist"]}
             requiredPermission="students"
           />
         </Layout>
@@ -227,7 +228,7 @@ function Router() {
         <Layout>
           <ProtectedRoute
             component={Users}
-            allowedRoles={["admin", "branch_manager"]}
+            allowedRoles={["admin"]}
             requiredPermission="users"
           />
         </Layout>
@@ -430,7 +431,7 @@ function Router() {
         <Layout>
           <ProtectedRoute
             component={Settings}
-            allowedRoles={["admin", "teacher", "psychologist", "parent"]}
+            allowedRoles={["admin"]}
             requiredPermission="settings"
             redirectTo="/my-profile"
           />
@@ -483,7 +484,7 @@ function Router() {
         <Layout>
           <ProtectedRoute
             component={BranchesPage}
-            allowedRoles={["admin", "teacher", "psychologist", "parent"]}
+            allowedRoles={["admin", "branch_manager"]}
             requiredPermission="branches"
           />
         </Layout>
@@ -492,25 +493,43 @@ function Router() {
         <Layout>
           <ProtectedRoute
             component={WebContentPage}
-            allowedRoles={["admin", "teacher", "psychologist", "parent"]}
+            allowedRoles={["admin"]}
             requiredPermission="web_content"
           />
         </Layout>
       </Route>
       <Route path="/admin/landing-settings">
-        <AdminLandingSettings />
+        <Layout>
+          <ProtectedRoute
+            component={AdminLandingSettings}
+            allowedRoles={["admin"]}
+            requiredPermission="web_content"
+          />
+        </Layout>
       </Route>
       <Route path="/admin/ai-settings">
-        <AdminAiSettings />
+        <Layout>
+          <ProtectedRoute
+            component={AdminAiSettings}
+            allowedRoles={["admin"]}
+            requiredPermission="settings"
+          />
+        </Layout>
       </Route>
       <Route path="/admin/ai-builder">
-        <AdminAiBuilder />
+        <Layout>
+          <ProtectedRoute
+            component={AdminAiBuilder}
+            allowedRoles={["admin"]}
+            requiredPermission="web_content"
+          />
+        </Layout>
       </Route>
       <Route path="/admin/marketing-hub">
         <Layout>
           <ProtectedRoute
             component={MarketingHub}
-            allowedRoles={["admin", "teacher", "psychologist", "parent"]}
+            allowedRoles={["admin", "marketer"]}
             requiredPermission="marketing_hub"
           />
         </Layout>
@@ -519,7 +538,7 @@ function Router() {
         <Layout>
           <ProtectedRoute
             component={AdminSalaries}
-            allowedRoles={["admin", "teacher", "psychologist", "parent"]}
+            allowedRoles={["admin"]}
             requiredPermission="users"
           />
         </Layout>

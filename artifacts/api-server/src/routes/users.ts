@@ -3,7 +3,7 @@ import { eq, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { db, usersTable, studentsTable, customRolesTable } from "@workspace/db";
 import { CreateUserBody, UpdateUserBody, GetUserParams, ListUsersQueryParams } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, requireRole } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
@@ -46,7 +46,7 @@ function serialize(u: any, cr?: any) {
   };
 }
 
-router.get("/users", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/users", requireAuth, requireRole(["admin"]), async (req: Request, res: Response): Promise<void> => {
   const user = (req as any).user;
   const params = ListUsersQueryParams.safeParse(req.query);
 
@@ -76,7 +76,7 @@ router.get("/users", requireAuth, async (req: Request, res: Response): Promise<v
   res.json(serialized);
 });
 
-router.post("/users", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post("/users", requireAuth, requireRole(["admin"]), async (req: Request, res: Response): Promise<void> => {
   const parsed = CreateUserBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -115,7 +115,7 @@ router.post("/users", requireAuth, async (req: Request, res: Response): Promise<
   res.status(201).json(serialize(user, resolvedCustomRole));
 });
 
-router.get("/users/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get("/users/:id", requireAuth, requireRole(["admin"]), async (req: Request, res: Response): Promise<void> => {
   const params = GetUserParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
@@ -130,7 +130,7 @@ router.get("/users/:id", requireAuth, async (req: Request, res: Response): Promi
   res.json(serialize(row.user, row.customRole));
 });
 
-router.put("/users/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.put("/users/:id", requireAuth, requireRole(["admin"]), async (req: Request, res: Response): Promise<void> => {
   const params = GetUserParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 
@@ -184,7 +184,7 @@ router.put("/users/:id", requireAuth, async (req: Request, res: Response): Promi
   res.json(serialize(user, resolvedCustomRole));
 });
 
-router.delete("/users/:id", requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.delete("/users/:id", requireAuth, requireRole(["admin"]), async (req: Request, res: Response): Promise<void> => {
   const params = GetUserParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
 

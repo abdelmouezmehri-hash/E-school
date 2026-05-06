@@ -58,7 +58,7 @@ router.post("/public/registration-requests", async (req: Request, res: Response)
 router.get(
   "/admin/registration-requests",
   requireAuth,
-  await requireRole(["admin", "receptionist"]),
+  requireRole(["admin", "receptionist"]),
   async (_req: Request, res: Response): Promise<void> => {
     const requests = await db
       .select()
@@ -72,7 +72,7 @@ router.get(
 router.post(
   "/admin/registration-requests/:id/approve",
   requireAuth,
-  await requireRole(["admin", "receptionist"]),
+  requireRole(["admin", "receptionist"]),
   async (req: Request, res: Response): Promise<void> => {
     const id = parseInt((req.params.id as string));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
@@ -138,7 +138,7 @@ router.post(
 router.delete(
   "/admin/registration-requests/:id",
   requireAuth,
-  await requireRole(["admin", "receptionist"]),
+  requireRole(["admin", "receptionist"]),
   async (req: Request, res: Response): Promise<void> => {
     const id = parseInt((req.params.id as string));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
