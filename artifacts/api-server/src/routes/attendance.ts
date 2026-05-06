@@ -13,6 +13,27 @@ import { requireAuth } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
+async function isOwningTeacher(user: any, sessionId: number): Promise<boolean> {
+  if (user.role === "admin") return true;
+  if (user.role !== "teacher") return false;
+  const [session] = await db
+    .select({ teacherId: classSessionsTable.teacherId })
+    .from(classSessionsTable)
+    .where(eq(classSessionsTable.id, sessionId));
+  return session?.teacherId === user.id;
+}
+
+async function canMutateAttendance(
+  user: any,
+  attendanceId: number,
+): Promise<boolean> {
+  const [attendance] = await db
+    .select({ sessionId: sessionAttendanceTable.sessionId })
+    .from(sessionAttendanceTable)
+    .where(eq(sessionAttendanceTable.id, attendanceId));
+  return attendance ? isOwningTeacher(user, attendance.sessionId) : false;
+}
+
 /**
  * GET /api/attendance/student/:studentId
  * Returns all class sessions for this student's group(s) with their attendance status,
@@ -24,15 +45,21 @@ router.get(
   requireAuth,
   async (req: Request, res: Response): Promise<void> => {
     const user = (req as any).user;
-    const studentId = parseInt((req.params.studentId as string));
-    if (!studentId) { res.status(400).json({ error: "Invalid studentId" }); return; }
+    const studentId = parseInt(req.params.studentId as string);
+    if (!studentId) {
+      res.status(400).json({ error: "Invalid studentId" });
+      return;
+    }
 
     // Parents can only view their own children
     if (user.role === "parent") {
-      const [student] = await db.select({ parentId: studentsTable.parentId })
-        .from(studentsTable).where(eq(studentsTable.id, studentId));
+      const [student] = await db
+        .select({ parentId: studentsTable.parentId })
+        .from(studentsTable)
+        .where(eq(studentsTable.id, studentId));
       if (!student || student.parentId !== user.id) {
-        res.status(403).json({ error: "Access denied" }); return;
+        res.status(403).json({ error: "Access denied" });
+        return;
       }
     }
 
@@ -43,20 +70,31 @@ router.get(
       .where(eq(groupStudentsTable.studentId, studentId));
 
     if (groupRows.length === 0) {
-      res.json({ sessions: [], totalExpected: 0, levelName: null, sessionsPerWeek: 2 });
+      res.json({
+        sessions: [],
+        totalExpected: 0,
+        levelName: null,
+        sessionsPerWeek: 2,
+      });
       return;
     }
 
     const groupId = groupRows[0].groupId; // use primary group
 
     // Get group + level info
-    const [group] = await db.select().from(groupsTable).where(eq(groupsTable.id, groupId));
+    const [group] = await db
+      .select()
+      .from(groupsTable)
+      .where(eq(groupsTable.id, groupId));
     let levelName: string | null = null;
     let durationWeeks = 8;
     let sessionsPerWeek = 2;
 
     if (group?.levelId) {
-      const [level] = await db.select().from(levelsTable).where(eq(levelsTable.id, group.levelId));
+      const [level] = await db
+        .select()
+        .from(levelsTable)
+        .where(eq(levelsTable.id, group.levelId));
       if (level) {
         levelName = level.name;
         durationWeeks = level.durationWeeks;
@@ -74,8 +112,12 @@ router.get(
       .orderBy(classSessionsTable.sessionDate);
 
     // Separate completed (or unset status) vs planned
-    const completedSessions = allSessions.filter((s) => (s as any).status !== "planned");
-    const plannedSessions = allSessions.filter((s) => (s as any).status === "planned");
+    const completedSessions = allSessions.filter(
+      (s) => (s as any).status !== "planned",
+    );
+    const plannedSessions = allSessions.filter(
+      (s) => (s as any).status === "planned",
+    );
 
     // For each completed session get this student's attendance
     const sessionData = await Promise.all(
@@ -93,7 +135,8 @@ router.get(
             verbalVocabulary: sessionAttendanceTable.verbalVocabulary,
             nonverbalEyeContact: sessionAttendanceTable.nonverbalEyeContact,
             nonverbalBodyLanguage: sessionAttendanceTable.nonverbalBodyLanguage,
-            nonverbalFacialExpressions: sessionAttendanceTable.nonverbalFacialExpressions,
+            nonverbalFacialExpressions:
+              sessionAttendanceTable.nonverbalFacialExpressions,
             behavioralNotes: sessionAttendanceTable.behavioralNotes,
             curriculumProgress: sessionAttendanceTable.curriculumProgress,
           })
@@ -101,8 +144,8 @@ router.get(
           .where(
             and(
               eq(sessionAttendanceTable.sessionId, s.id),
-              eq(sessionAttendanceTable.studentId, studentId)
-            )
+              eq(sessionAttendanceTable.studentId, studentId),
+            ),
           );
         return {
           sessionId: s.id,
@@ -123,7 +166,7 @@ router.get(
           behavioralNotes: att?.behavioralNotes ?? null,
           curriculumProgress: att?.curriculumProgress ?? null,
         };
-      })
+      }),
     );
 
     res.json({
@@ -142,7 +185,7 @@ router.get(
         lessonTitle: s.lessonTitle,
       })),
     });
-  }
+  },
 );
 
 /**
@@ -155,16 +198,25 @@ router.put(
   async (req: Request, res: Response): Promise<void> => {
     const user = (req as any).user;
     if (user.role !== "admin" && user.role !== "teacher") {
-      res.status(403).json({ error: "Not authorized" }); return;
+      res.status(403).json({ error: "Not authorized" });
+      return;
     }
-    const attendanceId = parseInt((req.params.attendanceId as string));
+    const attendanceId = parseInt(req.params.attendanceId as string);
     const { status } = req.body as { status: "present" | "absent" | "late" };
     if (!attendanceId || !status) {
-      res.status(400).json({ error: "attendanceId and status required" }); return;
+      res.status(400).json({ error: "attendanceId and status required" });
+      return;
     }
     const validStatuses = ["present", "absent", "late"];
     if (!validStatuses.includes(status)) {
-      res.status(400).json({ error: "Invalid status" }); return;
+      res.status(400).json({ error: "Invalid status" });
+      return;
+    }
+    if (!(await canMutateAttendance(user, attendanceId))) {
+      res
+        .status(403)
+        .json({ error: "Only the owning teacher can mutate attendance" });
+      return;
     }
 
     const [updated] = await db
@@ -173,9 +225,12 @@ router.put(
       .where(eq(sessionAttendanceTable.id, attendanceId))
       .returning();
 
-    if (!updated) { res.status(404).json({ error: "Attendance record not found" }); return; }
+    if (!updated) {
+      res.status(404).json({ error: "Attendance record not found" });
+      return;
+    }
     res.json(updated);
-  }
+  },
 );
 
 /**
@@ -189,33 +244,49 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     const user = (req as any).user;
     if (user.role !== "admin" && user.role !== "teacher") {
-      res.status(403).json({ error: "Not authorized" }); return;
+      res.status(403).json({ error: "Not authorized" });
+      return;
     }
 
-    const sessionId = parseInt((req.params.sessionId as string));
-    const studentId = parseInt((req.params.studentId as string));
+    const sessionId = parseInt(req.params.sessionId as string);
+    const studentId = parseInt(req.params.studentId as string);
     const { status } = req.body as { status: "present" | "absent" | "late" };
 
     if (!sessionId || !studentId || !status) {
-      res.status(400).json({ error: "sessionId, studentId and status required" }); return;
+      res
+        .status(400)
+        .json({ error: "sessionId, studentId and status required" });
+      return;
+    }
+
+    if (!(await isOwningTeacher(user, sessionId))) {
+      res
+        .status(403)
+        .json({ error: "Only the owning teacher can mutate attendance" });
+      return;
     }
 
     // Delete existing, then insert fresh (upsert-style)
-    await db.delete(sessionAttendanceTable).where(
-      and(
-        eq(sessionAttendanceTable.sessionId, sessionId),
-        eq(sessionAttendanceTable.studentId, studentId)
-      )
-    );
+    await db
+      .delete(sessionAttendanceTable)
+      .where(
+        and(
+          eq(sessionAttendanceTable.sessionId, sessionId),
+          eq(sessionAttendanceTable.studentId, studentId),
+        ),
+      );
 
-    const [record] = await db.insert(sessionAttendanceTable).values({
-      sessionId,
-      studentId,
-      status,
-    }).returning();
+    const [record] = await db
+      .insert(sessionAttendanceTable)
+      .values({
+        sessionId,
+        studentId,
+        status,
+      })
+      .returning();
 
     res.status(201).json(record);
-  }
+  },
 );
 
 export default router;

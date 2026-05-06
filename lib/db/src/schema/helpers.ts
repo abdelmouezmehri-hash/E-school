@@ -17,6 +17,8 @@ import {
   real as _sqReal,
   primaryKey as _sqPrimaryKey,
   index as _sqIndex,
+  uniqueIndex as _sqUniqueIndex,
+  check as _sqCheck,
 } from "drizzle-orm/sqlite-core";
 
 import {
@@ -30,6 +32,8 @@ import {
   jsonb as _pgJsonb,
   primaryKey as _pgPrimaryKey,
   index as _pgIndex,
+  uniqueIndex as _pgUniqueIndex,
+  check as _pgCheck,
 } from "drizzle-orm/pg-core";
 
 const isPg = (process.env.DATABASE_PROVIDER ?? "sqlite") === "postgresql";
@@ -49,23 +53,37 @@ const _jsonT = _sqText("" as string, { mode: "json" } as const);
  * Creates a table. Uses `pgTable` when DATABASE_PROVIDER=postgresql,
  * `sqliteTable` otherwise.
  */
-export const table = (isPg ? pgTable : sqliteTable) as unknown as typeof sqliteTable;
+export const table = (isPg
+  ? pgTable
+  : sqliteTable) as unknown as typeof sqliteTable;
 
 // ── Basic column builders ──────────────────────────────────────────────────────
 /** text column — identical API in both dialects */
 export const text = (isPg ? _pgText : _sqText) as unknown as typeof _sqText;
 
 /** integer column — use for plain integer FK / score / count columns */
-export const integer = (isPg ? _pgInteger : _sqInteger) as unknown as typeof _sqInteger;
+export const integer = (isPg
+  ? _pgInteger
+  : _sqInteger) as unknown as typeof _sqInteger;
 
 /** real (float) column */
 export const real = (isPg ? _pgReal : _sqReal) as unknown as typeof _sqReal;
 
 /** Composite primary key builder for junction tables */
-export const primaryKey = (isPg ? _pgPrimaryKey : _sqPrimaryKey) as unknown as typeof _sqPrimaryKey;
+export const primaryKey = (isPg
+  ? _pgPrimaryKey
+  : _sqPrimaryKey) as unknown as typeof _sqPrimaryKey;
 
 /** Table index builder — cross-database (PG or SQLite at runtime) */
 export const index = (isPg ? _pgIndex : _sqIndex) as unknown as typeof _sqIndex;
+
+/** Unique index builder — cross-database (PG or SQLite at runtime) */
+export const uniqueIndex = (isPg
+  ? _pgUniqueIndex
+  : _sqUniqueIndex) as unknown as typeof _sqUniqueIndex;
+
+/** Table CHECK constraint builder — cross-database (PG or SQLite at runtime) */
+export const check = (isPg ? _pgCheck : _sqCheck) as unknown as typeof _sqCheck;
 
 // ── Semantic column helpers ────────────────────────────────────────────────────
 
@@ -76,7 +94,9 @@ export const index = (isPg ? _pgIndex : _sqIndex) as unknown as typeof _sqIndex;
  */
 export function id(name = "id"): typeof _idT {
   if (isPg) return _pgSerial(name).primaryKey() as unknown as typeof _idT;
-  return _sqInteger(name).primaryKey({ autoIncrement: true }) as unknown as typeof _idT;
+  return _sqInteger(name).primaryKey({
+    autoIncrement: true,
+  }) as unknown as typeof _idT;
 }
 
 /**
@@ -87,7 +107,8 @@ export function id(name = "id"): typeof _idT {
  * Supports .notNull() / .defaultNow() / .default(value).
  */
 export function timestamp(name: string): typeof _tsT {
-  if (isPg) return _pgTimestamp(name, { withTimezone: true }) as unknown as typeof _tsT;
+  if (isPg)
+    return _pgTimestamp(name, { withTimezone: true }) as unknown as typeof _tsT;
   return _sqInteger(name, { mode: "timestamp" }) as unknown as typeof _tsT;
 }
 

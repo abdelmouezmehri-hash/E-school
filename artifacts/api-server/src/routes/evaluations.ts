@@ -1,10 +1,11 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or } from "drizzle-orm";
 import {
   db,
   evaluationsTable,
   studentsTable,
   getBranchIdFromStudent,
+  calculateProgressScore,
 } from "@workspace/db";
 import {
   CreateEvaluationBody,
@@ -12,20 +13,36 @@ import {
   UpdateEvaluationParams,
   DeleteEvaluationParams,
 } from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/auth";
+import { requireAuth, type AuthUser } from "../middlewares/auth";
 
 const router: IRouter = Router();
 
-function calcProgressScore(
-  speakingScore: number,
-  confidenceScore: number,
-  participationScore: number,
-): number {
-  return (
-    Math.round(
-      ((speakingScore + confidenceScore + participationScore) / 30) * 100 * 10,
-    ) / 10
-  );
+async function canAccessStudent(
+  user: AuthUser,
+  studentId: number,
+  mutate = false,
+): Promise<boolean> {
+  const [student] = await db
+    .select()
+    .from(studentsTable)
+    .where(eq(studentsTable.id, studentId));
+  if (!student) return false;
+  if (["admin", "branch_manager"].includes(user.role)) return true;
+  if (user.role === "teacher") return student.teacherId === user.id;
+  if (user.role === "parent") return !mutate && student.parentId === user.id;
+  return false;
+}
+
+async function canAccessEvaluation(
+  user: AuthUser,
+  evaluationId: number,
+  mutate = false,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ studentId: evaluationsTable.studentId })
+    .from(evaluationsTable)
+    .where(eq(evaluationsTable.id, evaluationId));
+  return row ? canAccessStudent(user, row.studentId, mutate) : false;
 }
 
 router.get(
@@ -34,44 +51,94 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     const params = ListEvaluationsQueryParams.safeParse(req.query);
 
+    const user = (req as Request & { user: AuthUser }).user;
     let evals = await db
-      .select()
+      .select({ evaluation: evaluationsTable })
       .from(evaluationsTable)
+      .innerJoin(
+        studentsTable,
+        eq(evaluationsTable.studentId, studentsTable.id),
+      )
+      .where(
+        user.role === "teacher"
+          ? eq(studentsTable.teacherId, user.id)
+          : user.role === "parent"
+            ? eq(studentsTable.parentId, user.id)
+            : or(eq(studentsTable.id, studentsTable.id)),
+      )
       .orderBy(evaluationsTable.weekNumber);
 
     if (params.success) {
       if (params.data.studentId && params.data.weekNumber) {
         evals = await db
-          .select()
+          .select({ evaluation: evaluationsTable })
           .from(evaluationsTable)
+          .innerJoin(
+            studentsTable,
+            eq(evaluationsTable.studentId, studentsTable.id),
+          )
           .where(
             and(
               eq(evaluationsTable.studentId, params.data.studentId),
               eq(evaluationsTable.weekNumber, params.data.weekNumber),
+              user.role === "teacher"
+                ? eq(studentsTable.teacherId, user.id)
+                : user.role === "parent"
+                  ? eq(studentsTable.parentId, user.id)
+                  : or(eq(studentsTable.id, studentsTable.id)),
             ),
           )
           .orderBy(evaluationsTable.weekNumber);
       } else if (params.data.studentId) {
         evals = await db
-          .select()
+          .select({ evaluation: evaluationsTable })
           .from(evaluationsTable)
-          .where(eq(evaluationsTable.studentId, params.data.studentId))
+          .innerJoin(
+            studentsTable,
+            eq(evaluationsTable.studentId, studentsTable.id),
+          )
+          .where(
+            and(
+              eq(evaluationsTable.studentId, params.data.studentId),
+              user.role === "teacher"
+                ? eq(studentsTable.teacherId, user.id)
+                : user.role === "parent"
+                  ? eq(studentsTable.parentId, user.id)
+                  : or(eq(studentsTable.id, studentsTable.id)),
+            ),
+          )
           .orderBy(evaluationsTable.weekNumber);
       } else if (params.data.weekNumber) {
         evals = await db
-          .select()
+          .select({ evaluation: evaluationsTable })
           .from(evaluationsTable)
-          .where(eq(evaluationsTable.weekNumber, params.data.weekNumber))
+          .innerJoin(
+            studentsTable,
+            eq(evaluationsTable.studentId, studentsTable.id),
+          )
+          .where(
+            and(
+              eq(evaluationsTable.weekNumber, params.data.weekNumber),
+              user.role === "teacher"
+                ? eq(studentsTable.teacherId, user.id)
+                : user.role === "parent"
+                  ? eq(studentsTable.parentId, user.id)
+                  : or(eq(studentsTable.id, studentsTable.id)),
+            ),
+          )
           .orderBy(evaluationsTable.weekNumber);
       }
     }
 
     res.json(
-      evals.map((e) => ({
-        ...e,
-        progressScore: parseFloat(e.progressScore?.toString() ?? "0"),
-        createdAt: e.createdAt.toISOString(),
-      })),
+      evals.map((row) => {
+        const e = "evaluation" in row ? row.evaluation : row;
+        return {
+          ...e,
+          progressScore: parseFloat(e.progressScore?.toString() ?? "0"),
+          createdAt: e.createdAt.toISOString(),
+        };
+      }),
     );
   },
 );
@@ -86,11 +153,17 @@ router.post(
       return;
     }
 
-    const progressScore = calcProgressScore(
-      parsed.data.speakingScore,
-      parsed.data.confidenceScore,
-      parsed.data.participationScore,
-    );
+    const user = (req as Request & { user: AuthUser }).user;
+    if (!(await canAccessStudent(user, parsed.data.studentId, true))) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    const progressScore = calculateProgressScore({
+      speakingScore: parsed.data.speakingScore,
+      confidenceScore: parsed.data.confidenceScore,
+      participationScore: parsed.data.participationScore,
+    });
 
     const [evaluation] = await db
       .insert(evaluationsTable)
@@ -138,11 +211,20 @@ router.put(
       return;
     }
 
-    const progressScore = calcProgressScore(
-      parsed.data.speakingScore,
-      parsed.data.confidenceScore,
-      parsed.data.participationScore,
-    );
+    const user = (req as Request & { user: AuthUser }).user;
+    if (
+      !(await canAccessEvaluation(user, params.data.id, true)) ||
+      !(await canAccessStudent(user, parsed.data.studentId, true))
+    ) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+
+    const progressScore = calculateProgressScore({
+      speakingScore: parsed.data.speakingScore,
+      confidenceScore: parsed.data.confidenceScore,
+      participationScore: parsed.data.participationScore,
+    });
 
     const [evaluation] = await db
       .update(evaluationsTable)
@@ -182,6 +264,12 @@ router.delete(
     const params = DeleteEvaluationParams.safeParse(req.params);
     if (!params.success) {
       res.status(400).json({ error: params.error.message });
+      return;
+    }
+
+    const user = (req as Request & { user: AuthUser }).user;
+    if (!(await canAccessEvaluation(user, params.data.id, true))) {
+      res.status(403).json({ error: "Forbidden" });
       return;
     }
 
