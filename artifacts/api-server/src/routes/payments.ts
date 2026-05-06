@@ -7,6 +7,21 @@ import { createNotification } from "./notifications";
 
 const router: IRouter = Router();
 
+
+async function canAccessPayment(user: any, payment: typeof paymentsTable.$inferSelect): Promise<boolean> {
+  if (["admin", "accountant"].includes(user.role)) return true;
+
+  const [student] = await db
+    .select({ parentId: studentsTable.parentId, branchId: studentsTable.branchId })
+    .from(studentsTable)
+    .where(eq(studentsTable.id, payment.studentId));
+
+  if (!student) return false;
+  if (user.role === "parent") return student.parentId === user.id;
+  if (user.role === "branch_manager") return !!user.branchId && student.branchId === user.branchId;
+  return false;
+}
+
 async function enrichPayment(payment: typeof paymentsTable.$inferSelect) {
   // One JOIN query replaces the previous 2–3 sequential queries.
   // The levels LEFT JOIN uses a constant condition derived from payment.levelId
@@ -167,6 +182,10 @@ router.get("/payments/:id", requireAuth, async (req: Request, res: Response): Pr
   const [payment] = await db.select().from(paymentsTable).where(eq(paymentsTable.id, params.data.id));
   if (!payment) {
     res.status(404).json({ error: "Payment not found" });
+    return;
+  }
+  if (!await canAccessPayment(user, payment)) {
+    res.status(403).json({ error: "Forbidden" });
     return;
   }
 
@@ -456,6 +475,7 @@ router.get("/transactions/:txId/receipt", requireAuth, async (req: Request, res:
 
   const [payment] = await db.select().from(paymentsTable).where(eq(paymentsTable.id, tx.paymentId));
   if (!payment) { res.status(404).json({ error: "Payment not found" }); return; }
+  if (!await canAccessPayment(user, payment)) { res.status(403).json({ error: "Forbidden" }); return; }
 
   const enriched = await enrichPayment(payment);
 
@@ -495,6 +515,7 @@ router.get("/payments/:id/enrollment-receipt", requireAuth, async (req: Request,
 
   const [payment] = await db.select().from(paymentsTable).where(eq(paymentsTable.id, paymentId));
   if (!payment) { res.status(404).json({ error: "Payment not found" }); return; }
+  if (!await canAccessPayment(user, payment)) { res.status(403).json({ error: "Forbidden" }); return; }
 
   const enriched = await enrichPayment(payment);
   const amountDue = payment.amountDue;

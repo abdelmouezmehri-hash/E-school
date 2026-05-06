@@ -11,6 +11,28 @@ const SHY_FLAGS = ["shy", "fearful", "anxious", "withdrawn"];
 
 const router: IRouter = Router();
 
+async function canReadStudent(user: any, student: { id: number; parentId: number | null; teacherId: number | null; branchId?: number | null }): Promise<boolean> {
+  if (["admin", "psychologist", "receptionist"].includes(user.role)) return true;
+  if (user.role === "parent") return student.parentId === user.id;
+  if (user.role === "branch_manager") return !!user.branchId && student.branchId === user.branchId;
+  if (user.role === "teacher") {
+    if (student.teacherId === user.id) return true;
+    const [membership] = await db
+      .select({ groupId: groupStudentsTable.groupId })
+      .from(groupStudentsTable)
+      .innerJoin(groupsTable, eq(groupsTable.id, groupStudentsTable.groupId))
+      .where(and(eq(groupStudentsTable.studentId, student.id), eq(groupsTable.teacherId, user.id)))
+      .limit(1);
+    return !!membership;
+  }
+  return false;
+}
+
+function canManageStudents(user: any): boolean {
+  return ["admin", "branch_manager", "receptionist"].includes(user.role);
+}
+
+
 function calcProgressScore(evals: { speakingScore: number; confidenceScore: number; participationScore: number }[]): number | null {
   if (evals.length < 2) return evals.length === 1 ? ((evals[0].speakingScore + evals[0].confidenceScore + evals[0].participationScore) / 3) * 10 : null;
 
@@ -94,6 +116,17 @@ router.get("/students", requireAuth, async (req: Request, res: Response): Promis
   // branch_manager is always scoped to their branch (covers conditional query paths above)
   if (forceBranchId !== null) {
     students = students.filter(s => s.branchId === forceBranchId);
+  }
+
+  // Teachers see only students assigned directly or enrolled in their groups.
+  if (user.role === "teacher") {
+    const memberships = await db
+      .select({ studentId: groupStudentsTable.studentId })
+      .from(groupStudentsTable)
+      .innerJoin(groupsTable, eq(groupsTable.id, groupStudentsTable.groupId))
+      .where(eq(groupsTable.teacherId, user.id));
+    const ownedStudentIds = new Set(memberships.map((m) => m.studentId));
+    students = students.filter((s) => s.teacherId === user.id || ownedStudentIds.has(s.id));
   }
 
   // Branch filter (admin/teacher global filter)
@@ -207,6 +240,12 @@ router.get("/students", requireAuth, async (req: Request, res: Response): Promis
 });
 
 router.post("/students", requireAuth, async (req: Request, res: Response): Promise<void> => {
+  const sessionUser = (req as any).user;
+  if (!canManageStudents(sessionUser)) {
+    res.status(403).json({ error: "Only admins, branch managers, and receptionists can create students." });
+    return;
+  }
+
   const parsed = CreateStudentBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -410,6 +449,11 @@ router.get("/students/:id", requireAuth, async (req: Request, res: Response): Pr
     res.status(404).json({ error: "Student not found" });
     return;
   }
+  const requestingUser = (req as any).user as { role: string; id: number; branchId?: number | null } | undefined;
+  if (!requestingUser || !await canReadStudent(requestingUser, student)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
 
   let levelName: string | null = null;
   let parentName: string | null = null;
@@ -469,7 +513,6 @@ router.get("/students/:id", requireAuth, async (req: Request, res: Response): Pr
     createdAt: p.createdAt.toISOString(),
   }));
 
-  const requestingUser = (req as any).user as { role: string; id: number } | undefined;
   const canViewPayments = requestingUser && ["admin", "accountant", "parent"].includes(requestingUser.role);
   const canViewPrivateTip = requestingUser && (
     ["admin", "psychologist"].includes(requestingUser.role) ||
@@ -514,6 +557,28 @@ router.put("/students/:id", requireAuth, async (req: Request, res: Response): Pr
   }
 
   const sessionUser = (req as any).user as { role: string; id: number; name: string; email: string };
+  const body = req.body as Record<string, unknown>;
+  if (!canManageStudents(sessionUser) && sessionUser.role !== "psychologist") {
+    res.status(403).json({ error: "Only admins, branch managers, receptionists, and psychologists can update students." });
+    return;
+  }
+  if (sessionUser.role === "psychologist") {
+    const allowedPsychologistFields = new Set([
+      "privateTip",
+      "behavioralFlags",
+      "notes",
+      "medicalAlerts",
+      "medicalIssues",
+      "learningDisabilities",
+      "supportInstructions",
+      "preferredTeachingMethod",
+    ]);
+    const forbiddenField = Object.keys(body).find((key) => !allowedPsychologistFields.has(key));
+    if (forbiddenField) {
+      res.status(403).json({ error: `Psychologists cannot update student field: ${forbiddenField}` });
+      return;
+    }
+  }
 
   const [currentStudent] = await db
     .select({ id: studentsTable.id, name: studentsTable.name, behavioralFlags: studentsTable.behavioralFlags, parentId: studentsTable.parentId })
@@ -534,7 +599,6 @@ router.put("/students/:id", requireAuth, async (req: Request, res: Response): Pr
   if (parsed.data.behavioralFlags !== undefined) updateData.behavioralFlags = parsed.data.behavioralFlags;
   if (parsed.data.notes !== undefined) updateData.notes = parsed.data.notes;
 
-  const body = req.body as Record<string, unknown>;
   if (body.profilePicture !== undefined) updateData.profilePicture = body.profilePicture;
   if (body.gender !== undefined) updateData.gender = body.gender || null;
   if (body.guardianRelationship !== undefined) updateData.guardianRelationship = body.guardianRelationship || null;
@@ -635,9 +699,14 @@ router.get("/students/:id/progress", requireAuth, async (req: Request, res: Resp
     return;
   }
 
-  const [student] = await db.select({ id: studentsTable.id, name: studentsTable.name }).from(studentsTable).where(eq(studentsTable.id, params.data.id));
+  const [student] = await db.select({ id: studentsTable.id, name: studentsTable.name, parentId: studentsTable.parentId, teacherId: studentsTable.teacherId, branchId: studentsTable.branchId }).from(studentsTable).where(eq(studentsTable.id, params.data.id));
   if (!student) {
     res.status(404).json({ error: "Student not found" });
+    return;
+  }
+  const user = (req as any).user;
+  if (!await canReadStudent(user, student)) {
+    res.status(403).json({ error: "Forbidden" });
     return;
   }
 
@@ -672,14 +741,14 @@ router.get("/students/:id/journey", requireAuth, async (req: Request, res: Respo
   if (isNaN(id)) { res.status(400).json({ error: "Invalid id" }); return; }
 
   const [student] = await db
-    .select({ id: studentsTable.id, name: studentsTable.name, levelId: studentsTable.levelId, parentId: studentsTable.parentId })
+    .select({ id: studentsTable.id, name: studentsTable.name, levelId: studentsTable.levelId, parentId: studentsTable.parentId, teacherId: studentsTable.teacherId, branchId: studentsTable.branchId })
     .from(studentsTable)
     .where(eq(studentsTable.id, id));
 
   if (!student) { res.status(404).json({ error: "Not found" }); return; }
 
   const user = (req as any).user;
-  if (user.role === "parent" && student.parentId !== user.id) {
+  if (!await canReadStudent(user, student)) {
     res.status(403).json({ error: "Forbidden" }); return;
   }
 

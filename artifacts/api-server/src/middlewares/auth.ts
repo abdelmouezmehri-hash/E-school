@@ -39,8 +39,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   next();
 }
 
-export async function requireRole(roles: string[]) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export function requireRole(roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const user = (req as Request & { user?: AuthUser }).user;
     if (!user || !roles.includes(user.role)) {
       res.status(403).json({ error: "Forbidden" });
@@ -54,8 +54,8 @@ export async function requireRole(roles: string[]) {
  * Middleware for custom-role users: verifies the user's custom role includes
  * a specific permission key. Falls through for base-role users (they use requireRole).
  */
-export async function requirePermission(key: string) {
-  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export function requirePermission(key: string) {
+  return (req: Request, res: Response, next: NextFunction): void => {
     const user = (req as Request & { user?: AuthUser }).user;
     if (!user) {
       res.status(401).json({ error: "Unauthorized" });

@@ -5,6 +5,28 @@ import { requireAuth } from "../middlewares/auth";
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
 
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+const ALLOWED_UPLOAD_MIME_PREFIXES = ["image/", "video/"];
+const ALLOWED_UPLOAD_MIME_TYPES = new Set(["application/pdf"]);
+
+function isSafeUploadName(name: unknown): name is string {
+  return typeof name === "string" &&
+    name.length > 0 &&
+    name.length <= 255 &&
+    !name.includes("/") &&
+    !name.includes("\\") &&
+    !name.includes("..") &&
+    !/[\x00-\x1f\x7f]/.test(name);
+}
+
+function isAllowedContentType(contentType: unknown): contentType is string {
+  if (typeof contentType !== "string") return false;
+  const normalized = contentType.toLowerCase();
+  return ALLOWED_UPLOAD_MIME_TYPES.has(normalized) ||
+    ALLOWED_UPLOAD_MIME_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+}
+
+
 /**
  * POST /storage/uploads/request-url
  * Request a presigned URL for file upload. Requires auth.
@@ -13,8 +35,16 @@ const objectStorageService = new ObjectStorageService();
  */
 router.post("/storage/uploads/request-url", requireAuth, async (req: Request, res: Response): Promise<void> => {
   const { name, size, contentType } = req.body ?? {};
-  if (!name || !size || !contentType) {
-    res.status(400).json({ error: "Missing required fields: name, size, contentType" });
+  if (!isSafeUploadName(name)) {
+    res.status(400).json({ error: "Invalid file name" });
+    return;
+  }
+  if (!Number.isInteger(size) || size <= 0 || size > MAX_UPLOAD_BYTES) {
+    res.status(400).json({ error: `File size must be between 1 byte and ${MAX_UPLOAD_BYTES} bytes` });
+    return;
+  }
+  if (!isAllowedContentType(contentType)) {
+    res.status(400).json({ error: "Unsupported content type" });
     return;
   }
 
