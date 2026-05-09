@@ -1,0 +1,69 @@
+<h2>اختر الخط المناسب</h2>
+<p class="subtitle">نفس التصميم الحالي — فقط الخط يتغير</p>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@400;500;700&family=Almarai:wght@400;700&family=Noto+Sans+Arabic:wght@400;600;700&display=swap');
+
+.font-preview {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 10px;
+  border: 2px solid #e2e8f0;
+  direction: rtl;
+}
+.font-preview table { width: 100%; border-collapse: collapse; }
+.font-preview th { background: #f8fafc; padding: 8px 10px; font-size: 11px; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+.font-preview td { padding: 8px 10px; font-size: 13px; border-bottom: 1px solid #f1f5f9; }
+.badge-blue { background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 6px; font-size: 11px; }
+.badge-green { background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 6px; font-size: 11px; }
+</style>
+
+<div class="options" style="direction:rtl; flex-direction: column; gap: 14px;">
+
+  <div class="option" data-choice="cairo" onclick="toggleSelect(this)">
+    <div class="letter">أ</div>
+    <div class="content" style="font-family:'Cairo',sans-serif; width:100%;">
+      <h3 style="font-family:'Cairo',sans-serif;">Cairo — خط كايرو</h3>
+      <div class="font-preview" style="font-family:'Cairo',sans-serif;">
+        <table>
+          <tr><th>#</th><th>التاريخ</th><th>عنوان الدرس</th><th>النمط</th><th>الحضور</th></tr>
+          <tr><td><strong style="color:#1d4ed8;">#11</strong></td><td style="color:#64748b;font-size:12px;">Apr 19, 2026</td><td><strong>لتنل</strong></td><td><span class="badge-blue">أكاديمية</span></td><td><span class="badge-green">✓ 1</span></td></tr>
+          <tr><td><strong style="color:#1d4ed8;">#10</strong></td><td style="color:#64748b;font-size:12px;">Apr 18, 2026</td><td><strong>Greeting</strong></td><td><span class="badge-blue">أكاديمية</span></td><td><span class="badge-green">✓ 2</span></td></tr>
+        </table>
+      </div>
+      <p style="color:#64748b; font-size:12px; margin-top:6px;">خط شائع، واضح، متوازن — مناسب جداً للجداول والأرقام</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="tajawal" onclick="toggleSelect(this)">
+    <div class="letter">ب</div>
+    <div class="content" style="font-family:'Tajawal',sans-serif; width:100%;">
+      <h3 style="font-family:'Tajawal',sans-serif;">Tajawal — خط تجوال</h3>
+      <div class="font-preview" style="font-family:'Tajawal',sans-serif;">
+        <table>
+          <tr><th>#</th><th>التاريخ</th><th>عنوان الدرس</th><th>النمط</th><th>الحضور</th></tr>
+          <tr><td><strong style="color:#1d4ed8;">#11</strong></td><td style="color:#64748b;font-size:12px;">Apr 19, 2026</td><td><strong>لتنل</strong></td><td><span class="badge-blue">أكاديمية</span></td><td><span class="badge-green">✓ 1</span></td></tr>
+          <tr><td><strong style="color:#1d4ed8;">#10</strong></td><td style="color:#64748b;font-size:12px;">Apr 18, 2026</td><td><strong>Greeting</strong></td><td><span class="badge-blue">أكاديمية</span></td><td><span class="badge-green">✓ 2</span></td></tr>
+        </table>
+      </div>
+      <p style="color:#64748b; font-size:12px; margin-top:6px;">خط خفيف وعصري — مقروء جداً وأنيق للواجهات</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="almarai" onclick="toggleSelect(this)">
+    <div class="letter">ج</div>
+    <div class="content" style="font-family:'Almarai',sans-serif; width:100%;">
+      <h3 style="font-family:'Almarai',sans-serif;">Almarai — خط المراعي</h3>
+      <div class="font-preview" style="font-family:'Almarai',sans-serif;">
+        <table>
+          <tr><th>#</th><th>التاريخ</th><th>عنوان الدرس</th><th>النمط</th><th>الحضور</th></tr>
+          <tr><td><strong style="color:#1d4ed8;">#11</strong></td><td style="color:#64748b;font-size:12px;">Apr 19, 2026</td><td><strong>لتنل</strong></td><td><span class="badge-blue">أكاديمية</span></td><td><span class="badge-green">✓ 1</span></td></tr>
+          <tr><td><strong style="color:#1d4ed8;">#10</strong></td><td style="color:#64748b;font-size:12px;">Apr 18, 2026</td><td><strong>Greeting</strong></td><td><span class="badge-blue">أكاديمية</span></td><td><span class="badge-green">✓ 2</span></td></tr>
+        </table>
+      </div>
+      <p style="color:#64748b; font-size:12px; margin-top:6px;">خط احترافي ومُستدير — يُستخدم في تطبيقات كبيرة مثل Noon وSTC</p>
+    </div>
+  </div>
+
+</div>

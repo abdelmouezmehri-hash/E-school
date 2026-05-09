@@ -1,0 +1,114 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.page { display: grid; grid-template-columns: 1fr 1fr; min-height: 520px; border-radius: var(--border-radius-lg); overflow: hidden; border: 0.5px solid var(--color-border-tertiary); }
+.left { background: var(--color-background-primary); padding: 2.5rem 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.right { background: #0d1520; padding: 2.5rem 2rem; display: flex; flex-direction: column; justify-content: space-between; }
+.logo-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 2rem; }
+.logo-icon { display: flex; align-items: center; }
+.logo-text { font-size: 22px; font-weight: 700; }
+.logo-kid { color: #1a3a7a; }
+.logo-speak { color: #F5A800; }
+.greeting { font-size: 20px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; text-align: center; }
+.sub { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 1.5rem; text-align: center; }
+.tabs-wrap { display: flex; gap: 6px; background: var(--color-background-secondary); border-radius: 10px; padding: 4px; margin-bottom: 1.5rem; width: 100%; }
+.tab { flex: 1; text-align: center; font-size: 13px; padding: 7px; border-radius: 8px; cursor: pointer; color: var(--color-text-secondary); }
+.tab.active { background: var(--color-background-primary); color: var(--color-text-primary); font-weight: 500; border: 0.5px solid var(--color-border-tertiary); }
+.field-wrap { width: 100%; margin-bottom: 12px; }
+.field-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 5px; text-align: right; }
+.field-input { width: 100%; padding: 10px 14px; border: 0.5px solid var(--color-border-secondary); border-radius: 10px; font-size: 14px; color: var(--color-text-primary); background: var(--color-background-secondary); text-align: right; outline: none; font-family: var(--font-sans); }
+.forgot { font-size: 12px; color: #F5A800; text-align: right; margin-bottom: 1rem; cursor: pointer; width: 100%; }
+.btn-login { width: 100%; padding: 11px; background: #F5A800; border: none; border-radius: 10px; font-size: 15px; font-weight: 500; color: #fff; cursor: pointer; margin-bottom: 1rem; font-family: var(--font-sans); }
+.divider { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; width: 100%; }
+.div-line { flex: 1; height: 0.5px; background: var(--color-border-tertiary); }
+.div-text { font-size: 12px; color: var(--color-text-secondary); }
+.staff-btn { width: 100%; padding: 9px; border: 0.5px solid var(--color-border-secondary); border-radius: 10px; font-size: 13px; color: var(--color-text-secondary); background: transparent; cursor: pointer; text-align: center; font-family: var(--font-sans); }
+.right-top { }
+.brand-tag { display: inline-block; font-size: 11px; color: #F5A800; background: rgba(245,168,0,0.12); padding: 3px 10px; border-radius: 20px; margin-bottom: 1.2rem; }
+.right-title { font-size: 22px; font-weight: 500; color: #fff; line-height: 1.4; margin-bottom: 6px; }
+.right-title span { color: #F5A800; }
+.right-sub { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 2rem; }
+.feature { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 1.2rem; }
+.feat-icon { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.feat-dot { width: 8px; height: 8px; border-radius: 50%; }
+.feat-text { flex: 1; }
+.feat-title { font-size: 13px; font-weight: 500; color: #fff; margin-bottom: 2px; }
+.feat-desc { font-size: 12px; color: rgba(255,255,255,0.4); }
+.right-footer { font-size: 11px; color: rgba(255,255,255,0.2); text-align: center; }
+</style>
+
+<div class="page" dir="rtl">
+  <div class="left">
+    <div class="logo-wrap">
+      <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="38" cy="58" r="28" fill="#F5A800"/>
+        <path d="M58 42 Q72 30 80 38" stroke="#F5A800" stroke-width="7" stroke-linecap="round" fill="none"/>
+        <path d="M63 32 Q82 16 92 26" stroke="#F5A800" stroke-width="7" stroke-linecap="round" fill="none"/>
+      </svg>
+      <div class="logo-text">
+        <span class="logo-kid">kid</span><span class="logo-speak">Speak</span>
+      </div>
+    </div>
+
+    <div class="greeting">مرحباً بك</div>
+    <div class="sub">سجّل دخولك لمتابعة تقدم طفلك</div>
+
+    <div class="tabs-wrap">
+      <div class="tab active">ولي الأمر</div>
+      <div class="tab">الفريق</div>
+    </div>
+
+    <div class="field-wrap">
+      <div class="field-label">رقم الهاتف أو البريد الإلكتروني</div>
+      <input class="field-input" type="text" placeholder="example@kidspeak.com" />
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">كلمة المرور</div>
+      <input class="field-input" type="password" placeholder="••••••••" />
+    </div>
+
+    <div class="forgot">نسيت كلمة المرور؟</div>
+
+    <button class="btn-login">تسجيل الدخول</button>
+
+    <div class="divider">
+      <div class="div-line"></div>
+      <div class="div-text">أو</div>
+      <div class="div-line"></div>
+    </div>
+
+    <div class="staff-btn">← دخول الفريق — أنت موظف؟</div>
+  </div>
+
+  <div class="right">
+    <div class="right-top">
+      <div class="brand-tag">أكاديمية اللغة</div>
+      <div class="right-title">تابع تقدم طفلك<br><span>بكل سهولة</span></div>
+      <div class="right-sub">راقب الحصص، التقييمات، والمدفوعات من مكان واحد</div>
+
+      <div class="feature">
+        <div class="feat-icon" style="background:rgba(29,158,117,0.18)"><div class="feat-dot" style="background:#1D9E75"></div></div>
+        <div class="feat-text">
+          <div class="feat-title">جدول حصص طفلك</div>
+          <div class="feat-desc">مواعيد الجلسات والتذكيرات</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feat-icon" style="background:rgba(55,138,221,0.18)"><div class="feat-dot" style="background:#378ADD"></div></div>
+        <div class="feat-text">
+          <div class="feat-title">تقييمات الأداء</div>
+          <div class="feat-desc">متابعة النمو والتطور</div>
+        </div>
+      </div>
+      <div class="feature">
+        <div class="feat-icon" style="background:rgba(245,168,0,0.15)"><div class="feat-dot" style="background:#F5A800"></div></div>
+        <div class="feat-text">
+          <div class="feat-title">حالة المدفوعات</div>
+          <div class="feat-desc">الفواتير والإيصالات</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-footer">kidspeak.com · 2025 KidSpeak</div>
+  </div>
+</div>

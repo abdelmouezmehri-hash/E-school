@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تصميم محسّن</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Cairo', 'Segoe UI', sans-serif; background: #f0f2f8; color: #1a2340; direction: rtl; min-height: 100vh; }
+
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 240px; flex-shrink: 0;
+    background: linear-gradient(180deg, #0f2952 0%, #1a3a6e 100%);
+    display: flex; flex-direction: column;
+    padding: 0;
+  }
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-dot { width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; box-shadow: 0 0 8px #f59e0b; }
+  .logo-text { color: white; font-weight: 800; font-size: 17px; letter-spacing: -0.3px; }
+
+  .nav-section { padding: 16px 12px 8px; font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 1px; text-transform: uppercase; }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 16px; margin: 2px 8px;
+    border-radius: 10px; cursor: pointer;
+    color: rgba(255,255,255,0.55); font-size: 13.5px; font-weight: 500;
+    transition: all 0.15s;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+  .nav-item.active { background: rgba(255,255,255,0.12); color: white; font-weight: 700; }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .active-bar { width: 3px; height: 100%; background: #f59e0b; border-radius: 0 3px 3px 0; position: absolute; right: 0; }
+
+  .sidebar-spacer { flex: 1; }
+  .sidebar-user {
+    margin: 12px; padding: 14px 12px;
+    background: rgba(255,255,255,0.07); border-radius: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .user-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 800; font-size: 15px;
+    flex-shrink: 0;
+  }
+  .user-name { color: white; font-size: 13px; font-weight: 700; }
+  .user-role { color: rgba(255,255,255,0.45); font-size: 11px; margin-top: 1px; }
+
+  /* ── Main ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* Top bar */
+  .topbar {
+    background: white; padding: 0 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; border-bottom: 1px solid #eaecf4;
+    box-shadow: 0 1px 0 #eaecf4;
+  }
+  .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #8492a6; }
+  .breadcrumb-sep { color: #d1d5e0; }
+  .breadcrumb-current { color: #1a2340; font-weight: 700; font-size: 15px; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 18px; border-radius: 10px; font-size: 13px;
+    font-weight: 700; cursor: pointer; border: none;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .btn-ghost { background: transparent; color: #5a6478; border: 1.5px solid #e4e7f0; }
+  .btn-ghost:hover { background: #f5f7ff; border-color: #c7cde0; }
+  .btn-secondary { background: #f0f4ff; color: #3b5bdb; border: 1.5px solid #dce4ff; }
+  .btn-secondary:hover { background: #e4ecff; }
+  .btn-primary { background: linear-gradient(135deg, #f59e0b, #f97316); color: white; box-shadow: 0 3px 10px rgba(245,158,11,0.35); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(245,158,11,0.45); }
+
+  /* Page content */
+  .page-body { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+
+  /* Group header card */
+  .group-header-card {
+    background: linear-gradient(135deg, #1a3a6e 0%, #0f2952 100%);
+    border-radius: 18px; padding: 22px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    color: white; position: relative; overflow: hidden;
+  }
+  .group-header-card::before {
+    content: ''; position: absolute; top: -40px; left: -40px;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+  .group-header-card::after {
+    content: ''; position: absolute; bottom: -60px; right: 60px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: rgba(245,158,11,0.08);
+  }
+  .group-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+  .group-meta { display: flex; align-items: center; gap: 10px; }
+  .chip {
+    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9);
+    backdrop-filter: blur(4px);
+  }
+  .chip-gold { background: rgba(245,158,11,0.3); color: #fcd34d; }
+  .group-stats { display: flex; gap: 20px; z-index: 1; }
+  .stat-item { text-align: center; }
+  .stat-num { font-size: 28px; font-weight: 800; color: #f59e0b; line-height: 1; }
+  .stat-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+
+  /* Role notice */
+  .role-notice {
+    display: flex; align-items: center; gap: 10px;
+    background: #eff6ff; border: 1.5px solid #bfdbfe;
+    border-radius: 12px; padding: 12px 18px;
+    font-size: 13px; color: #1d4ed8; font-weight: 600;
+  }
+  .role-notice-icon { font-size: 18px; }
+  .role-notice span { color: #93c5fd; font-weight: 400; margin-right: 4px; }
+
+  /* Content grid */
+  .content-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+
+  /* Cards */
+  .card {
+    background: white; border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(26,35,64,0.06), 0 4px 16px rgba(26,35,64,0.04);
+  }
+  .card-head {
+    padding: 18px 22px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid #f0f2f8;
+  }
+  .card-title { font-size: 15px; font-weight: 800; color: #1a2340; display: flex; align-items: center; gap: 8px; }
+  .card-title-icon { font-size: 16px; }
+  .num-badge {
+    background: #1a2340; color: white;
+    border-radius: 20px; padding: 3px 11px; font-size: 12px; font-weight: 700;
+  }
+  .card-body { padding: 0 22px 18px; }
+
+  /* Sessions table */
+  .sessions-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .sessions-table th {
+    padding: 11px 12px; font-size: 11px; color: #8492a6;
+    font-weight: 700; text-align: right; letter-spacing: 0.3px;
+    border-bottom: 2px solid #f0f2f8;
+  }
+  .sessions-table td {
+    padding: 12px 12px; font-size: 13.5px;
+    border-bottom: 1px solid #f7f8fc;
+    vertical-align: middle;
+  }
+  .sessions-table tr:last-child td { border-bottom: none; }
+  .sessions-table tbody tr { transition: background 0.1s; }
+  .sessions-table tbody tr:hover td { background: #fafbff; }
+
+  .session-id { color: #3b5bdb; font-weight: 800; font-size: 13px; }
+  .session-date { color: #8492a6; font-size: 12px; }
+  .session-title { font-weight: 700; color: #1a2340; }
+  .session-title.empty { color: #c8cfe0; font-style: italic; }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 8px; font-size: 11px; font-weight: 700;
+  }
+  .tag-academic { background: #eff6ff; color: #1d4ed8; }
+  .tag-dev { background: #fef9ee; color: #92400e; }
+
+  .attend { display: flex; align-items: center; gap: 6px; }
+  .attend-present { color: #10b981; font-size: 12px; font-weight: 700; background: #ecfdf5; padding: 2px 8px; border-radius: 6px; }
+  .attend-absent { color: #ef4444; font-size: 12px; font-weight: 700; background: #fef2f2; padding: 2px 8px; border-radius: 6px; }
+
+  .report-btn-done {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;
+    background: #ecfdf5; color: #10b981; border: none; cursor: pointer; font-family: inherit;
+  }
+  .report-btn-pending {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;
+    background: #fef9ee; color: #d97706; border: 1.5px dashed #fcd34d;
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .report-btn-pending:hover { background: #f59e0b; color: white; border-color: #f59e0b; transform: scale(1.03); }
+  .edit-btn {
+    width: 32px; height: 32px; border-radius: 9px;
+    background: #f5f7ff; color: #5a6478; border: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all 0.15s;
+  }
+  .edit-btn:hover { background: #e0e7ff; color: #3b5bdb; }
+
+  /* Right panel */
+  .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+  .mini-card-head { padding: 16px 18px 12px; display: flex; align-items: center; gap: 8px; }
+  .mini-card-title { font-size: 13px; font-weight: 800; color: #1a2340; }
+  .mini-card-body { padding: 0 18px 16px; }
+
+  .goal-box {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 1.5px solid #fcd34d; border-radius: 12px;
+    padding: 14px 16px; font-size: 14px; color: #92400e;
+    font-weight: 600; line-height: 1.6;
+  }
+
+  .student-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f7f8fc; }
+  .student-row:last-child { border-bottom: none; }
+  .s-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 800; color: white; flex-shrink: 0;
+  }
+  .s-name { font-size: 13.5px; font-weight: 700; flex: 1; }
+  .warn-badge { background: #fef3c7; color: #d97706; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+
+  /* Upcoming */
+  .upcoming-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 16px 22px 18px; }
+  .upcoming-item {
+    background: #f7f8fc; border-radius: 12px; padding: 14px 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: all 0.15s; cursor: pointer; position: relative;
+  }
+  .upcoming-item:hover { background: #eff0fb; transform: translateY(-2px); }
+  .upcoming-item.today { background: linear-gradient(135deg, #fef9ee, #fef3c7); border: 1.5px solid #fcd34d; }
+  .date-badge {
+    background: #1a2340; color: white; border-radius: 10px;
+    padding: 8px 12px; text-align: center;
+  }
+  .today .date-badge { background: linear-gradient(135deg, #f59e0b, #f97316); }
+  .date-day { font-size: 18px; font-weight: 800; line-height: 1; }
+  .date-month { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+  .upcoming-label { font-size: 12px; font-weight: 700; color: #1a2340; }
+  .upcoming-type { font-size: 11px; color: #8492a6; }
+  .del-btn {
+    position: absolute; top: 6px; left: 6px;
+    width: 20px; height: 20px; border-radius: 6px;
+    background: transparent; border: none; cursor: pointer;
+    color: #c8cfe0; font-size: 13px; display: flex; align-items: center; justify-content: center;
+  }
+  .del-btn:hover { color: #ef4444; background: #fef2f2; }
+
+  .section-label {
+    font-size: 10px; font-weight: 700; color: #b0b9cc;
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-dot"></div>
+      <div class="logo-text">KidSpeak Hub</div>
+    </div>
+
+    <div class="nav-section">القائمة</div>
+    <div class="nav-item active"><span class="icon">📚</span> مجموعاتي</div>
+    <div class="nav-item"><span class="icon">📋</span> مستحقاتي</div>
+    <div class="nav-item"><span class="icon">📊</span> التقييمات</div>
+    <div class="nav-item"><span class="icon">👨‍🎓</span> تلاميذ</div>
+    <div class="nav-item"><span class="icon">🖼️</span> معرض الصور والفيديو</div>
+    <div class="nav-item"><span class="icon">✉️</span> الرسائل</div>
+    <div class="nav-item"><span class="icon">💡</span> صندوق الأفكار</div>
+    <div class="nav-item"><span class="icon">👤</span> ملفي الشخصي</div>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar">A</div>
+      <div>
+        <div class="user-name">Abdelmouez Mehri</div>
+        <div class="user-role">Teacher · English</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <span>مجموعاتي</span>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">الفوج الأول</span>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost">📅 جدولة حصة</button>
+        <button class="btn btn-primary">+ إضافة حصة</button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="page-body">
+
+      <!-- Group header -->
+      <div class="group-header-card">
+        <div style="z-index:1;">
+          <div class="group-title">الفوج الأول</div>
+          <div class="group-meta">
+            <span class="chip">المستوى الأول</span>
+            <span class="chip chip-gold">الانتباه</span>
+            <span class="chip">اللغة الإنجليزية</span>
+          </div>
+        </div>
+        <div class="group-stats" style="z-index:1;">
+          <div class="stat-item">
+            <div class="stat-num">11</div>
+            <div class="stat-label">حصة منجزة</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">2</div>
+            <div class="stat-label">طالب نشط</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-num">5</div>
+            <div class="stat-label">حصص قادمة</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Role notice -->
+      <div class="role-notice">
+        <span class="role-notice-icon">👨‍🏫</span>
+        أنت تشاهد <strong style="margin:0 5px;">حصصك فقط</strong>
+        <span>— حصص اللغة الإنجليزية المرتبطة بك</span>
+      </div>
+
+      <!-- Content grid -->
+      <div class="content-grid">
+
+        <!-- Sessions table -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="card-title-icon">📋</span>
+              سجل الجلسات
+              <span class="num-badge">11</span>
+            </div>
+            <div style="display:flex;gap:6px;background:#f5f7ff;padding:4px;border-radius:10px;">
+              <div style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;background:white;color:#1a2340;box-shadow:0 1px 3px rgba(0,0,0,0.08);cursor:pointer;">أكاديمية</div>
+              <div style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;color:#8492a6;cursor:pointer;">نفسية</div>
+            </div>
+          </div>
+          <div style="padding:0 22px;">
+            <table class="sessions-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>التاريخ</th>
+                  <th>عنوان الدرس</th>
+                  <th>النمط</th>
+                  <th>الحضور</th>
+                  <th>تقرير الحصة</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="session-id">#11</span></td>
+                  <td><span class="session-date">Apr 19, 2026</span></td>
+                  <td><span class="session-title">لتنل</span></td>
+                  <td><span class="tag tag-academic">أكاديمية</span></td>
+                  <td><div class="attend"><span class="attend-present">✓ 1</span><span class="attend-absent">✗ 1</span></div></td>
+                  <td><button class="report-btn-done">✓ مكتمل</button></td>
+                  <td><button class="edit-btn">✏️</button></td>
+                </tr>
+                <tr>
+                  <td><span class="session-id">#10</span></td>
+                  <td><span class="session-date">Apr 19, 2026</span></td>
+                  <td><span class="session-title">لتنل</span></td>
+                  <td><span class="tag tag-academic">أكاديمية</span></td>
+                  <td><div class="attend"><span class="attend-present">✓ 1</span><span class="attend-absent">✗ 1</span></div></td>
+                  <td><button class="report-btn-pending">📝 أضف تقرير</button></td>
+                  <td><button class="edit-btn">✏️</button></td>
+                </tr>
+                <tr>
+                  <td><span class="session-id">#09</span></td>
+                  <td><span class="session-date">Apr 19, 2026</span></td>
+                  <td><span class="session-title empty">—</span></td>
+                  <td><span class="tag tag-academic">أكاديمية</span></td>
+                  <td><div class="attend"><span class="attend-present">✓ 1</span></div></td>
+                  <td><button class="report-btn-pending">📝 أضف تقرير</button></td>
+                  <td><button class="edit-btn">✏️</button></td>
+                </tr>
+                <tr>
+                  <td><span class="session-id">#08</span></td>
+                  <td><span class="session-date">Apr 19, 2026</span></td>
+                  <td><span class="session-title">لتلا</span></td>
+                  <td><span class="tag tag-academic">أكاديمية</span></td>
+                  <td><div class="attend"><span class="attend-present">✓ 1</span></div></td>
+                  <td><button class="report-btn-pending">📝 أضف تقرير</button></td>
+                  <td><button class="edit-btn">✏️</button></td>
+                </tr>
+                <tr>
+                  <td><span class="session-id">#07</span></td>
+                  <td><span class="session-date">Apr 18, 2026</span></td>
+                  <td><span class="session-title">Greeting</span></td>
+                  <td><span class="tag tag-academic">أكاديمية</span></td>
+                  <td><div class="attend"><span class="attend-present">✓ 2</span></div></td>
+                  <td><button class="report-btn-done">✓ مكتمل</button></td>
+                  <td><button class="edit-btn">✏️</button></td>
+                </tr>
+                <tr>
+                  <td><span class="session-id">#06</span></td>
+                  <td><span class="session-date">Apr 18, 2026</span></td>
+                  <td><span class="session-title">الانتباه</span></td>
+                  <td><span class="tag tag-academic">أكاديمية</span></td>
+                  <td><div class="attend"><span class="attend-present">✓ 1</span></div></td>
+                  <td><button class="report-btn-done">✓ مكتمل</button></td>
+                  <td><button class="edit-btn">✏️</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right column -->
+        <div class="right-col">
+
+          <div class="card">
+            <div class="mini-card-head">
+              <span style="font-size:16px;">🎯</span>
+              <span class="mini-card-title">هدف الحصة القادمة</span>
+            </div>
+            <div class="mini-card-body">
+              <div class="goal-box">الإيابليل</div>
+              <button class="btn btn-ghost" style="width:100%;margin-top:12px;justify-content:center;font-size:12px;">تعديل الجلسة</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="mini-card-head">
+              <span style="font-size:16px;">⚠️</span>
+              <span class="mini-card-title">يحتاج متابعة</span>
+            </div>
+            <div class="mini-card-body">
+              <div class="student-row">
+                <div class="s-avatar" style="background:linear-gradient(135deg,#3b82f6,#6366f1);">ط</div>
+                <span class="s-name">طارق</span>
+                <span class="warn-badge">⚠ متابعة</span>
+              </div>
+              <div class="student-row">
+                <div class="s-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">ع</div>
+                <span class="s-name">علي</span>
+                <span class="warn-badge">⚠ متابعة</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="mini-card-head">
+              <span style="font-size:16px;">👨‍🎓</span>
+              <span class="mini-card-title">التلاميذ</span>
+            </div>
+            <div class="mini-card-body">
+              <div class="student-row">
+                <div class="s-avatar" style="background:linear-gradient(135deg,#3b82f6,#6366f1);">ط</div>
+                <span class="s-name">طارق</span>
+                <span style="width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
+              </div>
+              <div class="student-row">
+                <div class="s-avatar" style="background:linear-gradient(135deg,#10b981,#059669);">ع</div>
+                <span class="s-name">علي</span>
+                <span style="width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
+              </div>
+              <button class="btn btn-ghost" style="width:100%;margin-top:10px;justify-content:center;font-size:12px;">+ إضافة تلميذ</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Upcoming sessions -->
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">
+            <span class="card-title-icon">📅</span>
+            الحصص القادمة
+            <span class="num-badge">5</span>
+          </div>
+        </div>
+        <div class="upcoming-grid">
+          <div class="upcoming-item">
+            <div class="date-badge"><div class="date-day">7</div><div class="date-month">JUN</div></div>
+            <div class="upcoming-label">حصة #12</div>
+            <div class="upcoming-type">أكاديمية</div>
+            <button class="del-btn">🗑</button>
+          </div>
+          <div class="upcoming-item">
+            <div class="date-badge"><div class="date-day">31</div><div class="date-month">MAY</div></div>
+            <div class="upcoming-label">حصة #11</div>
+            <div class="upcoming-type">أكاديمية</div>
+            <button class="del-btn">🗑</button>
+          </div>
+          <div class="upcoming-item">
+            <div class="date-badge"><div class="date-day">24</div><div class="date-month">MAY</div></div>
+            <div class="upcoming-label">حصة #10</div>
+            <div class="upcoming-type">أكاديمية</div>
+            <button class="del-btn">🗑</button>
+          </div>
+          <div class="upcoming-item">
+            <div class="date-badge"><div class="date-day">3</div><div class="date-month">MAY</div></div>
+            <div class="upcoming-label">حصة #9</div>
+            <div class="upcoming-type">أكاديمية</div>
+            <button class="del-btn">🗑</button>
+          </div>
+          <div class="upcoming-item today">
+            <div class="date-badge"><div class="date-day">19</div><div class="date-month">APR</div></div>
+            <div class="upcoming-label">حصة #8</div>
+            <div style="font-size:11px;background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:6px;font-weight:700;">اليوم</div>
+            <button class="del-btn">🗑</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

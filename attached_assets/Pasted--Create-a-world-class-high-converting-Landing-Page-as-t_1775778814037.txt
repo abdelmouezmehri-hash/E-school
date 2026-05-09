@@ -1,0 +1,31 @@
+"Create a world-class, high-converting Landing Page as the main entry point for the Kidspeak platform.
+1. Visual Identity (The Design):
+Color Palette: Use the Deep Blue for authority, Bright Orange for energy/kids, and White for clarity (based on the logo).
+Style: Modern, sleek, and high-tech yet friendly (Use Tailwind CSS).
+Hero Section: A powerful headline:
+English: 'Stop Studying English. Start Speaking It.'
+Arabic: 'توقف عن دراسة الإنجليزية.. ابدأ بالتحدث بها.'
+Call to Action (CTA): 'Register Your Child' (تسجيل طفلك) and 'Login' (دخول).
+2. The 'Problem & Solution' Section:
+The Problem: 'Most kids know English but are too afraid to speak.' (معظم الأطفال يعرفون الإنجليزية لكنهم يخافون من التحدث).
+The Kidspeak Method (Speaking-First): Use a 4-step visual diagram:
+Hear (اسمع) → Imitate (قلّد) → Speak (تحدث) → Read/Write (اقرأ واكتب).
+3. Unique Selling Points (USPs) - الميزات التنافسية:
+Psychological Support (The Compass): Highlight how Dr. Amina tracks confidence and breaks the fear barrier.
+The Talk Show (The Creative Engine): Show how kids become stars in their own video performances.
+Visual Roadmap for Parents: Mention the 'Learning Journey' and 'Transformation Video'.
+Bilingual Parent Hub: Total transparency for parents to track progress 24/7.
+4. Program Structure (المنهج):
+Display a clean grid of the 4 Levels:
+Each level: 8 Weeks | 2 Sessions per week | DZD Pricing.
+5. Trust Elements:
+Testimonials Area: 'What our parents say' (placeholder for reviews).
+The Global Citizen Badge: Mention the smart certificates with QR codes.
+6. Technical Integration:
+This landing page should be the Home Page (/).
+Link the 'Login' button to the existing login system.
+Link the 'Register' button to the Enrollment Request form we built.
+Ensure full Responsive Design (looks amazing on Mobile and Desktop).
+Full Bilingual (AR/EN) toggle at the top.
+7. Footer:
+Use the Settings/Branding data (Address, Phone, Social Links) to populate the footer automatically."

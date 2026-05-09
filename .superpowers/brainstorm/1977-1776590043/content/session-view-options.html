@@ -1,0 +1,67 @@
+<h2>كيف يرى الأستاذ صفحة الفوج؟</h2>
+<p class="subtitle">اختر الطريقة التي تناسبك أكثر</p>
+
+<div class="cards" style="direction:rtl;">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9ff;padding:16px;border-radius:8px;min-height:160px;">
+      <div style="background:#1e3a5f;color:white;padding:8px 12px;border-radius:6px;font-size:13px;margin-bottom:10px;text-align:right;">الفوج الأول</div>
+      <div style="background:#f0f4ff;border:2px solid #3b82f6;border-radius:6px;padding:8px 12px;text-align:right;">
+        <div style="font-size:11px;color:#3b82f6;font-weight:bold;margin-bottom:6px;">📋 سجل الجلسات (حصصي فقط)</div>
+        <div style="font-size:10px;color:#555;border-bottom:1px solid #e2e8f0;padding:4px 0;">#11 — لتنل — تنمائية ✅</div>
+        <div style="font-size:10px;color:#555;border-bottom:1px solid #e2e8f0;padding:4px 0;">#10 — لتنل — مهارية ✅</div>
+        <div style="font-size:10px;color:#555;padding:4px 0;">#09 — الانتباه — تنمائية ✅</div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:#e53e3e;background:#fff5f5;padding:6px 8px;border-radius:4px;text-align:right;">
+        🚫 الحصص النفسية مخفية تماماً
+      </div>
+    </div>
+    <div class="card-body">
+      <h3 style="direction:rtl;">أ — عرض حصصي فقط</h3>
+      <p style="direction:rtl;">الأستاذ يرى حصصه فقط. لا حصص نفسية تظهر أبداً.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9ff;padding:16px;border-radius:8px;min-height:160px;">
+      <div style="background:#1e3a5f;color:white;padding:8px 12px;border-radius:6px;font-size:13px;margin-bottom:10px;text-align:right;">الفوج الأول</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <div style="background:#3b82f6;color:white;padding:4px 10px;border-radius:20px;font-size:10px;cursor:pointer;">حصصي 👨‍🏫</div>
+        <div style="background:#e2e8f0;color:#555;padding:4px 10px;border-radius:20px;font-size:10px;cursor:pointer;">حصص الأخصائية</div>
+      </div>
+      <div style="background:#f0f4ff;border:2px solid #3b82f6;border-radius:6px;padding:8px 12px;text-align:right;">
+        <div style="font-size:11px;color:#3b82f6;font-weight:bold;margin-bottom:6px;">📋 حصصي</div>
+        <div style="font-size:10px;color:#555;border-bottom:1px solid #e2e8f0;padding:4px 0;">#11 — لتنل ✅</div>
+        <div style="font-size:10px;color:#555;padding:4px 0;">#10 — لتنل ✅</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3 style="direction:rtl;">ب — تبويبات منفصلة</h3>
+      <p style="direction:rtl;">تبويب "حصصي" وتبويب "حصص الأخصائية". الأستاذ يستطيع رؤية الاثنين لكن لا يعدّل إلا حصصه.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9ff;padding:16px;border-radius:8px;min-height:160px;">
+      <div style="background:#1e3a5f;color:white;padding:8px 12px;border-radius:6px;font-size:13px;margin-bottom:10px;text-align:right;">الفوج الأول</div>
+      <div style="background:#f0f4ff;border-radius:6px;padding:8px 12px;text-align:right;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <select style="font-size:10px;padding:2px 6px;border:1px solid #cbd5e0;border-radius:4px;">
+            <option>كل الحصص</option>
+            <option>حصصي فقط</option>
+            <option>حصص الأخصائية</option>
+          </select>
+          <span style="font-size:11px;color:#3b82f6;font-weight:bold;">📋 سجل الجلسات</span>
+        </div>
+        <div style="font-size:10px;color:#555;border-bottom:1px solid #e2e8f0;padding:4px 0;">#11 — لتنل — تنمائية ✅</div>
+        <div style="font-size:10px;color:#555;border-bottom:1px solid #e2e8f0;padding:4px 0;">#10 — نفسية/إكلينيكية 🧠</div>
+        <div style="font-size:10px;color:#555;padding:4px 0;">#09 — لتنل — تنمائية ✅</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3 style="direction:rtl;">ج — قائمة موحدة مع فلتر</h3>
+      <p style="direction:rtl;">كل الحصص في قائمة واحدة، مع فلتر للتصفية. الأقل وضوحاً لكن الأكثر شمولاً.</p>
+    </div>
+  </div>
+
+</div>

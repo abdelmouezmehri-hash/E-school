@@ -1,0 +1,187 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.dash { padding: 1.5rem; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.title { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.subtitle { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+.stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; }
+.stat-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.stat-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.stat-val.amber { color: #BA7517; }
+.stat-val.green { color: #3B6D11; }
+.stat-val.blue { color: #185FA5; }
+.stat-val.coral { color: #993C1D; }
+.section { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.section-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+.tabs { display: flex; gap: 4px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 3px; margin-bottom: 1rem; }
+.tab { flex: 1; text-align: center; font-size: 12px; padding: 5px 8px; border-radius: 6px; cursor: pointer; color: var(--color-text-secondary); }
+.tab.active { background: var(--color-background-primary); color: var(--color-text-primary); font-weight: 500; border: 0.5px solid var(--color-border-tertiary); }
+.task-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.task-row:last-child { border-bottom: none; }
+.task-info { flex: 1; }
+.task-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+.task-meta { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+.badge-exec { background: #E6F1FB; color: #185FA5; }
+.badge-review { background: #FAEEDA; color: #854F0B; }
+.badge-done { background: #EAF3DE; color: #3B6D11; }
+.badge-approved { background: #EEEDFE; color: #534AB7; }
+.task-amount { font-size: 14px; font-weight: 500; color: var(--color-text-primary); white-space: nowrap; }
+.task-date { font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; }
+.actions { display: flex; gap: 6px; }
+.btn-sm { font-size: 12px; padding: 4px 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); cursor: pointer; color: var(--color-text-primary); }
+.btn-primary { background: #185FA5; color: #fff; border-color: #185FA5; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.asset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.asset-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px; text-align: center; }
+.asset-icon { font-size: 24px; margin-bottom: 6px; }
+.asset-name { font-size: 12px; color: var(--color-text-primary); font-weight: 500; }
+.asset-size { font-size: 11px; color: var(--color-text-secondary); }
+.earning-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.earning-row:last-child { border-bottom: none; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-left: 6px; }
+.dot-green { background: #639922; }
+.dot-amber { background: #BA7517; }
+</style>
+
+<div class="dash" dir="rtl">
+  <div class="header">
+    <div>
+      <div class="title">المحرك الإبداعي</div>
+      <div class="subtitle">لوحة تحكم المبدع — أبريل 2026</div>
+    </div>
+    <button class="btn-sm btn-primary">+ مهمة جديدة</button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">المهام النشطة</div>
+      <div class="stat-val blue">3</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">بانتظار المراجعة</div>
+      <div class="stat-val amber">1</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">مكتملة هذا الشهر</div>
+      <div class="stat-val green">7</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">مستحقاتي</div>
+      <div class="stat-val coral">14,000 دج</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">مهامي</div>
+    </div>
+    <div class="tabs">
+      <div class="tab active">للتنفيذ</div>
+      <div class="tab">قيد التنفيذ</div>
+      <div class="tab">في المراجعة</div>
+      <div class="tab">معتمد</div>
+      <div class="tab">منشور</div>
+    </div>
+    <div class="task-row">
+      <div class="task-info">
+        <div class="task-name">تصميم بوستر رمضان</div>
+        <div class="task-meta">تصميم جرافيك · الموعد: 30 أبريل</div>
+      </div>
+      <span class="badge badge-exec">قيد التنفيذ</span>
+      <div class="task-amount">2,000 دج</div>
+      <div class="actions">
+        <button class="btn-sm">رفع ملف</button>
+        <button class="btn-sm btn-primary">إرسال للمراجعة</button>
+      </div>
+    </div>
+    <div class="task-row">
+      <div class="task-info">
+        <div class="task-name">فيديو إعلاني للمستوى الأول</div>
+        <div class="task-meta">تصوير · الموعد: 5 مايو</div>
+      </div>
+      <span class="badge badge-review">في المراجعة</span>
+      <div class="task-amount">5,000 دج</div>
+      <div class="actions">
+        <button class="btn-sm">عرض الملف</button>
+      </div>
+    </div>
+    <div class="task-row">
+      <div class="task-info">
+        <div class="task-name">حملة تسويقية انستغرام</div>
+        <div class="task-meta">تسويق · الموعد: 10 مايو</div>
+      </div>
+      <span class="badge badge-approved">معتمد</span>
+      <div class="task-amount">3,000 دج</div>
+      <div class="actions">
+        <button class="btn-sm btn-primary">نشر</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">أصولي المرفوعة</div>
+        <button class="btn-sm">+ رفع</button>
+      </div>
+      <div class="asset-grid">
+        <div class="asset-card">
+          <div class="asset-icon">🖼</div>
+          <div class="asset-name">poster_v2.png</div>
+          <div class="asset-size">2.4 MB</div>
+        </div>
+        <div class="asset-card">
+          <div class="asset-icon">🎬</div>
+          <div class="asset-name">promo_v1.mp4</div>
+          <div class="asset-size">48 MB</div>
+        </div>
+        <div class="asset-card">
+          <div class="asset-icon">📄</div>
+          <div class="asset-name">brief.pdf</div>
+          <div class="asset-size">0.8 MB</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">مستحقاتي</div>
+      </div>
+      <div class="earning-row">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary)">بوستر رمضان</div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">أبريل 2026</div>
+        </div>
+        <div style="text-align:left">
+          <div style="font-size:13px;font-weight:500;color:#3B6D11">2,000 دج <span class="status-dot dot-green"></span></div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">مدفوع</div>
+        </div>
+      </div>
+      <div class="earning-row">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary)">فيديو إعلاني</div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">أبريل 2026</div>
+        </div>
+        <div style="text-align:left">
+          <div style="font-size:13px;font-weight:500;color:#BA7517">5,000 دج <span class="status-dot dot-amber"></span></div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">معلق</div>
+        </div>
+      </div>
+      <div class="earning-row">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--color-text-primary)">حملة انستغرام</div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">مايو 2026</div>
+        </div>
+        <div style="text-align:left">
+          <div style="font-size:13px;font-weight:500;color:#BA7517">3,000 دج <span class="status-dot dot-amber"></span></div>
+          <div style="font-size:11px;color:var(--color-text-secondary)">معلق</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

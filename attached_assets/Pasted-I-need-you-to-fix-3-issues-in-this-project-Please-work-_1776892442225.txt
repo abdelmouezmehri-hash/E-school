@@ -1,0 +1,18 @@
+I need you to fix 3 issues in this project. Please work through them one by one:
+Issue 1 — Campaign Landing Page /lp/:slug not working:
+The route exists in App.tsx and the component exists at pages/campaign-landing/index.tsx, but the page shows blank or errors when visited. Check:
+
+The public API endpoint GET /api/public/campaigns/:slug in artifacts/api-server/src/routes/campaigns.ts — make sure it returns the campaign data correctly including title, description, and active status
+The CampaignLandingPage component — make sure it handles loading states, missing campaigns (404), and renders the form correctly
+Test by visiting /lp/test and verify it shows a proper "campaign not found" message instead of blank
+
+Issue 2 — Page editor slug dialog:
+In artifacts/kidspeak/src/pages/admin/web-content/index.tsx, the create new page dialog already exists. Verify it has all 3 fields: Title EN, Title AR, and Slug with live preview showing the full URL like kidspeakdz.com/p/your-slug. If the slug field is missing the live preview, add it.
+Issue 3 — Lead to Student enrollment flow:
+The backend endpoints exist (/leads/:id/request-enrollment, /marketing-enrollment-requests, /marketing-enrollment-requests/:id/approve). The frontend in students page already imports useListMarketingEnrollmentRequests and useApproveMarketingEnrollment. Fix these specific gaps:
+
+In artifacts/kidspeak/src/pages/admin/marketing-hub/index.tsx — verify the "إرسال لقسم التلاميذ" button correctly calls useRequestEnrollment and shows success/error toast
+In artifacts/kidspeak/src/pages/students/index.tsx — the marketing enrollment requests section should show pending requests with a blue/gray badge, each with an "قبول وتسجيل" button that opens a dialog to complete student data (level, enrollmentDate) then calls useApproveMarketingEnrollment
+After approval, the lead status should automatically update to "enrolled" in the marketing hub list
+
+After fixing all 3 issues, run: pnpm --filter @workspace/api-server run build
